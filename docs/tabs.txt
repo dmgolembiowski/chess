@@ -1,0 +1,6 @@
+https://github.com/bevyengine/bevy/tree/main/crates/bevy_ecs
+https://github.com/bevyengine/bevy/blob/main/examples/ecs/hierarchy.rs
+https://github.com/bevyengine/bevy/blob/main/examples/ecs/run_conditions.rs
+https://github.com/bevyengine/bevy/blob/main/examples/async_tasks/external_source_external_thread.rs
+https://github.com/bevyengine/bevy/blob/main/examples/app/custom_loop.rs
+
