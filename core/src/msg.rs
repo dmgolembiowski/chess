@@ -49,7 +49,7 @@ pub(crate) enum CliMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub(crate) enum Msg {
+pub(crate) enum Response {
     Ping,
     #[default]
     Pong,
