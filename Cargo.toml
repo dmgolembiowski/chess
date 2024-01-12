@@ -1,0 +1,6 @@
+[workspace]
+exclude = ["vendor/bevy_spicy_networking"]
+version = "0.0.1"
+resolver = "2"
+name = "chyes"
+members = ["core", "engine", "chess-derive"]
