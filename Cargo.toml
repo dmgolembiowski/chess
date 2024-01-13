@@ -3,4 +3,4 @@ name = "raylib-leptos-chess"
 exclude = ["vendor/bevy_spicy_networking"]
 version = "0.0.1"
 resolver = "2"
-members = ["core", "chess-derive"]
+members = ["chess-core", "chess-derive", "chess-game"]

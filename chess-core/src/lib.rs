@@ -1,9 +1,9 @@
 #[allow(unused)]
-pub(crate) mod constants;
-pub(crate) mod helper;
-pub(crate) mod msg;
-pub(crate) mod traits;
-pub(crate) mod types;
+pub mod constants;
+pub mod helper;
+pub mod msg;
+pub mod traits;
+pub mod types;
 
 use crate::types::{Color, Piece, RawBoard, Tile};
 use anyhow::Result;
