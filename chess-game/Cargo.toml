@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = { version = "1.0.79", features = ["backtrace"] }
 chess-core = { path = "../chess-core" }
+const_typed_builder = "0.3.0"
 raylib = "3.7"
-rscenes = { version = "1.4.2", features = ["ecs", "eyre", "hecs"] }
+rscenes = { version = "1.4.2", features = ["ecs", "hecs"] }
+rstest = "0.18.2"
