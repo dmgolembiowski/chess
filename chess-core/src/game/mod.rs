@@ -36,6 +36,27 @@ impl GameState {
             hist: History::default(),
         }
     }
+    pub fn init(
+        started: bool,
+        finished: bool,
+        p1_clock: Option<u32>,
+        p2_clock: Option<u32>,
+        p1: PlayerData,
+        p2: PlayerData,
+        board: RawBoard,
+        hist: History,
+    ) -> Self {
+        Self {
+            started,
+            finished,
+            p1_clock,
+            p2_clock,
+            p1,
+            p2,
+            board,
+            hist,
+        }
+    }
 }
 
 #[derive(Default, Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -43,7 +64,13 @@ pub struct History {
     id: String,
     moves: Vec<Action>,
 }
-
+impl History {
+    pub fn init(id: impl Into<String>) -> Self {
+        let id = id.into();
+        let moves: Vec<Action> = vec![];
+        Self { id, moves }
+    }
+}
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Action {
     #[default]
