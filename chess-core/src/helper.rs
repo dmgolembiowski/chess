@@ -1,4 +1,5 @@
 use crate::{constants::TILECOUNT, types::Tile};
+
 #[allow(unused, clippy::style)]
 pub const fn chess_board() -> [Tile; TILECOUNT] {
     use crate::constants::*;

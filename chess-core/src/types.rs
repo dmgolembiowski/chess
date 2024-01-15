@@ -1,4 +1,5 @@
-use crate::constants::TILECOUNT;
+use crate::{constants::TILECOUNT, /*helper::chess_board_from_raw, */ msg::MoveOp};
+use const_typed_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
@@ -10,6 +11,9 @@ use std::{
 // for referring to given slots to this via [`crate::helper`]().
 pub type RawBoard = [Tile; TILECOUNT];
 
+pub struct Board(pub [[Tile; 8]; 8]);
+
+impl Board {}
 // [`Piece`]() is a shared data structure. [`PlayerData`]()
 // instances are considered their owning source. That is, they have the
 // main responsibility of enforcing [`Drop::drop`] wait until all strong reference
@@ -18,7 +22,7 @@ pub type RawBoard = [Tile; TILECOUNT];
 // This detail is important because [`PlayerData`]() shares write-access (via
 // interior mutability) with [`crate::core::types::Tile`s](), provided one calls
 // [`Rc::upgrade`]() on the [`std::rc::Weak`]() refernce counted pointer to the piece.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Builder, Debug, Clone, Serialize, Deserialize)]
 pub struct Piece {
     pub color: Color,
     pub ty: Type,
@@ -32,6 +36,53 @@ impl Piece {
     pub fn update_loc(&mut self, new_loc: usize) {
         self.loc = new_loc;
     }
+    /*
+    pub fn relative_movement(&self, raw_board: &mut RawBoard) -> () /*&[Move]*/ {
+        let board_rot = match self.color {
+            Color::White => false,
+            Color::Black => true,
+        };
+
+        let mut board = chess_board_from_raw(&raw_board);
+        if board_rot {
+            todo!("Implement a 8x8 matrix rotation algorithm");
+            todo!("Transform all indicies into their rotated counterparts");
+            todo!("Store the inverse index pairs as key-value tuples");
+        }
+        let it = *self;
+        match it.ty {
+            Type::Pawn => {}
+            Type::Rook => {}
+            Type::King => {}
+            Type::Queen => {}
+            Type::Bishop => {}
+            Type::Knight => {}
+        }
+    }
+    */
+}
+
+pub struct Move<'a> {
+    on: &'a mut Piece,
+    cap: bool,
+    dir: Direction,
+    len: usize,
+    dest: usize,
+    on_complete: Option<Box<dyn FnOnce() -> Move<'a>>>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub enum Direction {
+    Forward,
+    Backward,
+    Right,
+    Left,
+    ForwardRight,
+    BackwardRight,
+    ForwardLeft,
+    BackwardLeft,
+    #[default]
+    Nil,
 }
 
 // Each of the playable kinds of chess [`Piece`]() has a
@@ -90,7 +141,7 @@ impl PartialEq<Background> for Color {
 // [`b_endzone`]() and [`w_endzone`]() respectively refer to the tile's
 // ability to promote a pawn to another [`crate::type::Type`]() such as
 // a [`Type::Queen`]().
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Builder, Debug, Clone, Serialize, Deserialize)]
 pub struct Tile {
     pub w_endzone: bool,
     pub b_endzone: bool,

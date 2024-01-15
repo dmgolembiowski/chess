@@ -12,26 +12,23 @@ pub struct XyPair {
     pub y: isize,
 }
 
-#[allow(non_upper_case_globals)]
-pub const fn rot_index(index: usize) -> usize {
-    const idx: isize = index as isize;
-    const dif: isize = idx - 63;
-    const rel: isize = dif.abs();
-    const ret: usize = rel as usize;
+pub fn rot_index(index: usize) -> usize {
+    let idx: isize = index as isize;
+    let dif: isize = idx - 63;
+    let rel: isize = dif.abs();
+    let ret: usize = rel as usize;
     ret
 }
 
-#[allow(non_upper_case_globals)]
-pub const fn index_to_xy(index: usize) -> XyPair {
-    const idx: isize = index as isize;
-    const x: isize = idx % 8_isize;
-    const y: isize = (idx - x) % 7_isize;
+pub fn index_to_xy(index: usize) -> XyPair {
+    let idx: isize = index as isize;
+    let x: isize = idx % 8_isize;
+    let y: isize = (idx - x) % 7_isize;
     XyPair { x, y }
 }
 
-#[allow(non_upper_case_globals)]
-pub const fn xy_to_index(&XyPair { x, y }: &XyPair) -> usize {
-    const x: usize = x as usize;
-    const y: usize = y as usize;
+pub fn xy_to_index(&XyPair { x, y }: &XyPair) -> usize {
+    let x: usize = x as usize;
+    let y: usize = y as usize;
     8 * y + x
 }
