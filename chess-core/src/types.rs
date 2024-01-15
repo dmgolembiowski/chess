@@ -1,3 +1,4 @@
+use crate::msg::PieceId;
 use crate::{constants::TILECOUNT, /*helper::chess_board_from_raw, */ msg::MoveOp};
 use const_typed_builder::Builder;
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,7 @@ impl Board {}
 // [`Rc::upgrade`]() on the [`std::rc::Weak`]() refernce counted pointer to the piece.
 #[derive(Builder, Debug, Clone, Serialize, Deserialize)]
 pub struct Piece {
+    pub id: PieceId,
     pub color: Color,
     pub ty: Type,
     pub loc: usize,
@@ -35,6 +37,9 @@ pub struct Piece {
 impl Piece {
     pub fn update_loc(&mut self, new_loc: usize) {
         self.loc = new_loc;
+    }
+    pub fn set_id(&mut self, new_id: PieceId) {
+        self.id = new_id;
     }
     /*
     pub fn relative_movement(&self, raw_board: &mut RawBoard) -> () /*&[Move]*/ {
