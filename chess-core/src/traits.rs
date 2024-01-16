@@ -2,7 +2,8 @@ use crate::types::*;
 
 pub trait ChessFactory {
     fn init(ty: Type, color: Color, loc: usize) -> Piece {
-        Piece { color, ty, loc }
+        let id = 0_i16;
+        Piece { color, ty, loc, id }
     }
     fn pawn_white(loc: usize) -> Piece {
         <Self as ChessFactory>::init(Type::Pawn, Color::White, loc)

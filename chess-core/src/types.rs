@@ -1,5 +1,6 @@
+#![allow(dead_code)]
+use crate::constants::TILECOUNT;
 use crate::msg::PieceId;
-use crate::{constants::TILECOUNT, /*helper::chess_board_from_raw, */ msg::MoveOp};
 use const_typed_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::{

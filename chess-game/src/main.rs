@@ -1,3 +1,4 @@
+#![allow(unused_variables, unused_imports, unused_assignments)]
 use rscenes::prelude::*;
 
 #[allow(non_upper_case_globals, dead_code)]
@@ -276,6 +277,7 @@ impl Default for Game {
 #[derive(Default, Debug)]
 pub struct Player;
 
+#[allow(dead_code)]
 #[derive(Default, Debug)]
 pub struct ChessSandboxScene {
     game: Game,

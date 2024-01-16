@@ -2,8 +2,8 @@ pub mod math;
 
 use crate::constants;
 use crate::msg::PieceId;
-use crate::types::{Color, Piece, RawBoard, Tile};
-use anyhow::Result;
+use crate::types::{Color, Piece, RawBoard, Tile, VisionPiece};
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::{cell::RefCell, rc::Rc};
@@ -61,15 +61,15 @@ impl GameState {
     pub fn piece_by_id(&self, piece_id: &PieceId) -> Option<Rc<RefCell<Piece>>> {
         match *piece_id {
             pid @ 1..=16 => {
-                for rc in self.p1.pieces {
+                for rc in &self.p1.pieces {
                     if rc.borrow().id == pid {
                         return Some(Rc::clone(&rc));
                     }
                 }
                 None
             }
-            pid @ -1..=-16 => {
-                for rc in self.p2.pieces {
+            pid @ -16..=-1 => {
+                for rc in &self.p2.pieces {
                     if rc.borrow().id == pid {
                         return Some(Rc::clone(&rc));
                     }
@@ -78,6 +78,10 @@ impl GameState {
             }
             _ => None,
         }
+    }
+    pub fn calculate_vision(&self, piece: Rc<RefCell<Piece>>) -> Result<VisionPiece> {
+        let _ = piece;
+        Err(anyhow!("Not implemented"))
     }
 }
 
@@ -159,6 +163,7 @@ mod tests {
         let bq = Some(Piece {
             color: Color::Black,
             ty: Type::Queen,
+            id: -4_i16,
             loc: <usize as Default>::default(),
         });
         bq.unwrap();
@@ -171,6 +176,7 @@ mod tests {
         let bq = Piece {
             color: Color::Black,
             ty: Type::Queen,
+            id: -4_i16,
             loc: <usize as Default>::default(),
         };
         assert_eq!(it, serde_json::to_string(&bq).unwrap().as_str());

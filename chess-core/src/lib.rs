@@ -1,4 +1,3 @@
-#[allow(unused)]
 pub mod constants;
 pub mod game;
 pub mod helper;
@@ -6,9 +5,9 @@ pub mod msg;
 pub mod traits;
 pub mod types;
 
-use crate::types::VisionPiece;
-use crate::msg::{GameId, MoveOp, PieceId, PlayerId};
+use crate::msg::{GameId, PieceId,};
 use crate::traits::{ChessFactory, StandardChess};
+use crate::types::VisionPiece;
 use anyhow::Result;
 use chess_derive::ChessFactory;
 use chess_derive::StandardChess;
@@ -90,13 +89,13 @@ impl ChessGame {
 
         for mut white_piece in w.into_iter() {
             let id = unsafe { &mut ids_white.next().unwrap_unchecked() };
-            &mut white_piece.set_id(*id);
+            let _ = &mut white_piece.set_id(*id);
             add_piece(&mut board, white_piece.loc, &mut p1, white_piece)?;
         }
 
         for mut black_piece in b.into_iter() {
             let id = unsafe { &mut ids_black.next().unwrap_unchecked() };
-            &mut black_piece.set_id(*id);
+            let _ = &mut black_piece.set_id(*id);
             add_piece(&mut board, black_piece.loc, &mut p2, black_piece)?;
         }
 
@@ -107,11 +106,15 @@ impl ChessGame {
     }
 
     pub fn request_vision(&self, piece_id: PieceId) -> Result<VisionPiece> {
-        // First thing we're going to do is ask our GameState for a 
+        // First thing we're going to do is ask our GameState for a
         // reference to the piece corresponding to the PieceId we specify
-        use std::{cell::RefCell, rc::Rc};
         use crate::types::Piece;
+        use std::{cell::RefCell, rc::Rc};
         let piece: Option<Rc<RefCell<Piece>>> = self.game.piece_by_id(&piece_id);
-        anyhow::bail!("not implemented")
+        if let Some(rc) = piece {
+            self.game.calculate_vision(rc)
+        } else {
+            Err(anyhow::anyhow!("Piece not found: {piece_id}"))
+        }
     }
 }

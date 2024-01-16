@@ -4,9 +4,6 @@
 //! idiomatic. The math within this file is not meant to be
 //! maintainable or make sense, merely it simplifies visual reasoning
 //! about where pieces should be able to go.
-use crate::constants;
-use crate::game::{Piece, RawBoard, Tile};
-
 pub struct XyPair {
     pub x: isize,
     pub y: isize,
