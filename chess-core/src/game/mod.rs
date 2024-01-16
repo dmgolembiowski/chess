@@ -1,6 +1,7 @@
 pub mod math;
 
 use crate::constants;
+use crate::msg::PieceId;
 use crate::types::{Color, Piece, RawBoard, Tile};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -55,6 +56,27 @@ impl GameState {
             p2,
             board,
             hist,
+        }
+    }
+    pub fn piece_by_id(&self, piece_id: &PieceId) -> Option<Rc<RefCell<Piece>>> {
+        match *piece_id {
+            pid @ 1..=16 => {
+                for rc in self.p1.pieces {
+                    if rc.borrow().id == pid {
+                        return Some(Rc::clone(&rc));
+                    }
+                }
+                None
+            }
+            pid @ -1..=-16 => {
+                for rc in self.p2.pieces {
+                    if rc.borrow().id == pid {
+                        return Some(Rc::clone(&rc));
+                    }
+                }
+                None
+            }
+            _ => None,
         }
     }
 }

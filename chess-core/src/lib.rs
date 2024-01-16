@@ -6,6 +6,7 @@ pub mod msg;
 pub mod traits;
 pub mod types;
 
+use crate::types::VisionPiece;
 use crate::msg::{GameId, MoveOp, PieceId, PlayerId};
 use crate::traits::{ChessFactory, StandardChess};
 use anyhow::Result;
@@ -42,19 +43,20 @@ impl GameMaster {
         Ok(game_id)
     }
 
-    pub fn request_game_state<'a, 'b>(&'a self, game_id: GameId) -> Result<&'b GameState>
+    pub fn request_game_state<'a, 'b>(&'a self, game_id: GameId) -> Result<&'b ChessGame>
     where
         'a: 'b,
     {
         if let Some(ref_game) = self.sessions.get(&game_id) {
-            Ok(&ref_game.game)
+            Ok(&ref_game)
         } else {
             anyhow::bail!("Game with {game_id} not found");
         }
     }
 
     pub fn request_vision(&self, game_id: GameId, piece_id: PieceId) -> Result<VisionPiece> {
-        let state = self.request_game_state(game_id)?;
+        let chess = self.request_game_state(game_id)?;
+        chess.request_vision(piece_id)
     }
 }
 
@@ -102,5 +104,14 @@ impl ChessGame {
         let game = GameState::init(started, finished, p1_clock, p2_clock, p1, p2, board, hist);
 
         Ok(Self { game_id, game })
+    }
+
+    pub fn request_vision(&self, piece_id: PieceId) -> Result<VisionPiece> {
+        // First thing we're going to do is ask our GameState for a 
+        // reference to the piece corresponding to the PieceId we specify
+        use std::{cell::RefCell, rc::Rc};
+        use crate::types::Piece;
+        let piece: Option<Rc<RefCell<Piece>>> = self.game.piece_by_id(&piece_id);
+        anyhow::bail!("not implemented")
     }
 }
