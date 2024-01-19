@@ -8,7 +8,10 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 chess-core = { path = "../chess-core" }
+chess-server = { path = "../chess-server" }
 const_typed_builder = "0.3.0"
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+crossbeam-channel = "0.5.11"
+crossbeam-utils = "0.8.19"
 raylib = "3.7"
-rscenes = { version = "1.4.2", features = ["ecs", "hecs"] }
-rstest = "0.18.2"
+# rscenes = { version = "1.4.2", features = ["ecs", "hecs"] }

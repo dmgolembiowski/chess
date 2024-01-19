@@ -193,6 +193,7 @@ impl Tile {
     }
 }
 
+#[derive(Default)]
 pub struct VisionPiece<'a> {
     piece_id: PieceId,
     moves: [Option<Move<'a>>; 25],

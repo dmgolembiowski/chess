@@ -5,14 +5,19 @@ pub mod msg;
 pub mod traits;
 pub mod types;
 
-use crate::msg::{GameId, PieceId,};
+use crate::msg::{GameId, PieceId};
 use crate::traits::{ChessFactory, StandardChess};
 use crate::types::VisionPiece;
 use anyhow::Result;
 use chess_derive::ChessFactory;
 use chess_derive::StandardChess;
 use game::GameState;
+use std::thread;
 use std::{collections::BTreeMap, sync::atomic::AtomicU64};
+
+pub fn spawn_game_master() -> GameMaster {
+    GameMaster::new()
+}
 
 pub struct GameMaster {
     indexer: Box<dyn Fn() -> GameId>,
@@ -85,7 +90,7 @@ impl ChessGame {
         let mut board = chess_board();
 
         let mut ids_white = IntoIterator::into_iter(1_i16..=16_i16);
-        let mut ids_black = IntoIterator::into_iter(-1_i16..=-16_i16);
+        let mut ids_black = IntoIterator::into_iter(-16_i16..=-1_i16).rev();
 
         for mut white_piece in w.into_iter() {
             let id = unsafe { &mut ids_white.next().unwrap_unchecked() };
@@ -94,7 +99,7 @@ impl ChessGame {
         }
 
         for mut black_piece in b.into_iter() {
-            let id = unsafe { &mut ids_black.next().unwrap_unchecked() };
+            let id = &mut ids_black.next().unwrap();
             let _ = &mut black_piece.set_id(*id);
             add_piece(&mut board, black_piece.loc, &mut p2, black_piece)?;
         }

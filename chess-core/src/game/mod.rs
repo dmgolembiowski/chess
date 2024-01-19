@@ -3,7 +3,7 @@ pub mod math;
 use crate::constants;
 use crate::msg::PieceId;
 use crate::types::{Color, Piece, RawBoard, Tile, VisionPiece};
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::{cell::RefCell, rc::Rc};
@@ -80,8 +80,9 @@ impl GameState {
         }
     }
     pub fn calculate_vision(&self, piece: Rc<RefCell<Piece>>) -> Result<VisionPiece> {
-        let _ = piece;
-        Err(anyhow!("Not implemented"))
+        let piece = piece.borrow();
+
+        Ok(VisionPiece::default())
     }
 }
 
@@ -172,7 +173,7 @@ mod tests {
     #[test]
     fn bq_json() {
         use serde_json;
-        let it = r#"{"color":"Black","ty":"Queen","loc":0}"#;
+        let it = r#"{"id":-4,"color":"Black","ty":"Queen","loc":0}"#;
         let bq = Piece {
             color: Color::Black,
             ty: Type::Queen,
@@ -217,7 +218,6 @@ mod tests {
         let b: [Piece; 16] = ChessBoard::gen_std_black();
 
         let mut board = chess_board();
-
         // For each player:
         // Clone the location index from the piece,
         // Wrap the piece in a Rc<RefCell<_>>,
