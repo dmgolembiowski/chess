@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 chess-core = { path = "../chess-core" }
 chess-derive = { path = "../chess-derive" }
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel", "crossbeam-queue"] }
