@@ -155,11 +155,13 @@ fn pawn_moves_two_spaces_only_once() {
     todo!("Y +/- 2 movement is only allowed for the pawn's first move");
 }
 
+#[ignore = "Future"]
 #[test]
 fn pawn_cannot_pass_thru_unless_en_passant() {
     todo!("Filter available movement by reducing options that allow blindspot passthru");
 }
 
+#[ignore = "Future"]
 #[test]
 fn pawn_en_passant_black_captures_white() {
     /* "When a pawn advances two squares on its initial move and
@@ -175,6 +177,7 @@ fn pawn_en_passant_black_captures_white() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn pawn_en_passant_white_captures_black() {
     /* "When a pawn advances two squares on its initial move and
@@ -220,6 +223,7 @@ fn queens_can_move_as_either_a_bishop_or_rook() {
     todo!("Program queen movement");
 }
 
+#[ignore = "Future"]
 #[test]
 fn resolve_before_end_of_game_reached_otherwise_panic() {
     todo!(
@@ -227,6 +231,7 @@ fn resolve_before_end_of_game_reached_otherwise_panic() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn cannot_capture_king_only_threaten_check_or_checkmate() {
     todo!("Directly capturing the king should never happen");
@@ -249,11 +254,13 @@ fn bishop_queen_rook_stop_before_ally_tile_aka_no_passthru() {
     todo!("Knight passthru privilege does not apply to queen, bishop, nor rook.");
 }
 
+#[ignore = "Future"]
 #[test]
 fn simple_white_pawn_promotion() {
     todo!("Non-interaction pawn promotion to queen succeeds");
 }
 
+#[ignore = "Future"]
 #[test]
 fn pawn_promotion_following_diagonal_capture() {
     todo!("Pawn promotion after capturing an enemy piece at endzone succeeds");
@@ -264,26 +271,31 @@ fn simple_king_movement() {
     todo!("Ignoring check/checkmate logic, king can move to any defined surrounding tile");
 }
 
+#[ignore = "Future"]
 #[test]
 fn move_update_includes_check_info() {
     todo!("the act of sending the move should also convey one or more rays that make the capture possible");
 }
 
+#[ignore = "Future"]
 #[test]
 fn sacrificial_piece_to_protect_king_works() {
     todo!("Allow players to move their piece to protect the king from an existing enemy check");
 }
 
+#[ignore = "Future"]
 #[test]
 fn show_but_forbid_movement_that_exposes_check_or_checkmate() {
     todo!("Mark a move or capture that induces a check");
 }
 
+#[ignore = "Future"]
 #[test]
 fn raise_error_submitting_moves_that_cause_new_checks_or_new_checkmate() {
     todo!("Intentionally submit a move and confirm it yields an error");
 }
 
+#[ignore = "Future"]
 #[test]
 fn pawn_promotion_recalculates_check_on_enemy_king() {
     todo!(
@@ -295,51 +307,61 @@ fn pawn_promotion_recalculates_check_on_enemy_king() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn white_kingside_castling_works() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn black_kingside_castling_works() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn white_queenside_castling_works() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn black_queenside_castling_works() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn white_kingside_castling_works_unless_inducing_check() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn black_kingside_castling_works_unless_inducing_check() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn white_queenside_castling_works_unless_inducing_check() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn black_queenside_castling_works_unless_inducing_check() {
     todo!("...");
 }
 
+#[ignore = "Future"]
 #[test]
 fn verify_unavailable_castling_because_rook_moved_already() {
     todo!("Remove possibility to perform castle maneuver b/c illegal move");
 }
 
+#[ignore = "Future"]
 #[test]
 fn verify_unavailable_castling_because_king_moved_already() {
     todo!(
@@ -348,26 +370,31 @@ fn verify_unavailable_castling_because_king_moved_already() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn forbid_castling_when_king_in_check() {
     todo!("Remove (and verify) the king being unable to castle if it is in check or checkmate.");
 }
 
+#[ignore = "Future"]
 #[test]
 fn castling_requires_empty_tiles_between_king_and_rook() {
     todo!("Construct a context where castling is legal and see if the option to perform it exists");
 }
 
+#[ignore = "Future"]
 #[test]
 fn vision_cannot_exceed_endzone_or_sidelines() {
     todo!("Movement options existing beyond the 8x8 tile bounds cannot be valid");
 }
 
+#[ignore = "Future"]
 #[test]
 fn allow_forfeit_before_checkmate() {
     todo!("Players can concede the game");
 }
 
+#[ignore = "Future"]
 #[test]
 fn request_tie_from_opponent() {
     todo!(
@@ -376,36 +403,43 @@ fn request_tie_from_opponent() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn disable_spamming_tie_plz() {
     todo!("Players can only request a tie twice.");
 }
 
+#[ignore = "Future"]
 #[test]
 fn answering_tie_request_does_not_eat_timer() {
     todo!("Pause both timers when either player requests a draw");
 }
 
+#[ignore = "Future"]
 #[test]
 fn checkmate_concessions_and_drawing_disable_further_movement() {
     todo!("... as well as freeze the clocks");
 }
 
+#[ignore = "Future"]
 #[test]
 fn time_elapsing_mutates_active_players_clock_only() {
     todo!("Use concurrent synchronization to accurately decrement a player's chess clock");
 }
 
+#[ignore = "Future"]
 #[test]
 fn pausing_game_suspends_all_clocks() {
     todo!("Verify that time remaining on clocks remains the same at the start and end of pausing");
 }
 
+#[ignore = "Future"]
 #[test]
 fn running_out_of_time_triggers_forfeit() {
     todo!("When a player's clock reaches zero, submit a forfeit action and do not accept more movement submissions");
 }
 
+#[ignore = "Future"]
 #[test]
 fn draw_when_game_reaches_dead_position_from_king_vs_king() {
     /* A dead position is defined as a position where
@@ -421,6 +455,7 @@ fn draw_when_game_reaches_dead_position_from_king_vs_king() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn draw_when_game_reaches_dead_position_from_king_vs_king_and_bishop() {
     /* A dead position is defined as a position where
@@ -436,6 +471,7 @@ fn draw_when_game_reaches_dead_position_from_king_vs_king_and_bishop() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn draw_when_game_reaches_dead_position_from_king_vs_king_and_knight() {
     /* A dead position is defined as a position where
@@ -451,6 +487,7 @@ fn draw_when_game_reaches_dead_position_from_king_vs_king_and_knight() {
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn draw_when_game_reaches_dead_position_from_king_and_dark_bishop_vs_king_and_dark_bishop() {
     /* A dead position is defined as a position where
@@ -466,6 +503,7 @@ fn draw_when_game_reaches_dead_position_from_king_and_dark_bishop_vs_king_and_da
     );
 }
 
+#[ignore = "Future"]
 #[test]
 fn draw_when_game_reaches_dead_position_from_king_and_light_bishop_vs_king_and_light_bishop() {
     /* A dead position is defined as a position where
