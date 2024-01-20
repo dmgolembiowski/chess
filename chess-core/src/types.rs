@@ -42,32 +42,7 @@ impl Piece {
     pub fn set_id(&mut self, new_id: PieceId) {
         self.id = new_id;
     }
-    /*
-    pub fn relative_movement(&self, raw_board: &mut RawBoard) -> () /*&[Move]*/ {
-        let board_rot = match self.color {
-            Color::White => false,
-            Color::Black => true,
-        };
-
-        let mut board = chess_board_from_raw(&raw_board);
-        if board_rot {
-            todo!("Implement a 8x8 matrix rotation algorithm");
-            todo!("Transform all indicies into their rotated counterparts");
-            todo!("Store the inverse index pairs as key-value tuples");
-        }
-        let it = *self;
-        match it.ty {
-            Type::Pawn => {}
-            Type::Rook => {}
-            Type::King => {}
-            Type::Queen => {}
-            Type::Bishop => {}
-            Type::Knight => {}
-        }
-    }
-    */
 }
-
 pub struct Move<'a> {
     on: &'a mut Piece,
     cap: bool,
@@ -194,7 +169,35 @@ impl Tile {
 }
 
 #[derive(Default)]
-pub struct VisionPiece<'a> {
-    piece_id: PieceId,
-    moves: [Option<Move<'a>>; 25],
+pub struct VisionPiece<'a, 'b>
+where
+    'a: 'b,
+{
+    pub piece_id: PieceId,
+    pub moves: [Option<&'a Move<'b>>; 25],
+}
+
+impl<'a, 'b> VisionPiece<'a, 'b>
+where
+    'a: 'b,
+{
+    #[inline]
+    pub fn new_empty(piece_id: PieceId) -> Self {
+        let moves: [Option<&'b Move<'a>>; 25] = Default::default();
+        Self { piece_id, moves }
+    }
+    #[inline]
+    pub fn new_with_moves(piece_id: PieceId, moves: &'a [Move<'b>]) -> Self {
+        let mut buffer: [Option<&'a Move<'b>>; 25] = Default::default();
+        for (i, m) in moves.as_ref().into_iter().enumerate() {
+            if i >= 25 {
+                break;
+            }
+            buffer[i] = Some(&*m);
+        }
+        Self {
+            piece_id,
+            moves: buffer,
+        }
+    }
 }

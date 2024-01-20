@@ -1,12 +1,14 @@
 pub mod math;
 
-use crate::constants;
 use crate::msg::PieceId;
-use crate::types::{Color, Piece, RawBoard, Tile, VisionPiece};
-use anyhow::Result;
+use crate::types::{Color, Piece, RawBoard, Tile, Type, VisionPiece};
+use crate::{constants, types};
+use anyhow::{anyhow, bail, Result};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::{cell::RefCell, rc::Rc};
+
+use self::math::XyPair;
 
 // #[derive(Debug, Serialize, Deserialize)]
 #[serde_as]
@@ -79,10 +81,29 @@ impl GameState {
             _ => None,
         }
     }
-    pub fn calculate_vision(&self, piece: Rc<RefCell<Piece>>) -> Result<VisionPiece> {
+    pub fn calculate_vision(
+        &self,
+        piece: Rc<RefCell<Piece>>,
+        board: &types::RawBoard,
+    ) -> Result<VisionPiece> {
         let piece = piece.borrow();
-
-        Ok(VisionPiece::default())
+        let invert: bool = if &piece.color == &Color::Black {
+            true
+        } else {
+            false
+        };
+        if invert {
+            bail!("not yet implemented: handling simple cases first");
+        }
+        let XyPair { x, y } = crate::game::math::index_to_xy(piece.loc);
+        match piece.ty {
+            Type::Bishop => Err(anyhow!("Bishop movement not available yet")),
+            Type::King => Err(anyhow!("King movement not yet available")),
+            Type::Knight => Err(anyhow!("Knight movement not available")),
+            Type::Pawn => Ok(VisionPiece::default()),
+            Type::Queen => Err(anyhow!("Queen movement not yet available")),
+            Type::Rook => Err(anyhow!("Rook movemvent not available")),
+        }
     }
 }
 
