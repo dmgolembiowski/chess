@@ -156,8 +156,38 @@ fn pawn_moves_two_spaces_only_once() {
 }
 
 #[test]
-fn pawn_cannot_pass_thru() {
+fn pawn_cannot_pass_thru_unless_en_passant() {
     todo!("Filter available movement by reducing options that allow blindspot passthru");
+}
+
+#[test]
+fn pawn_en_passant_black_captures_white() {
+    /* "When a pawn advances two squares on its initial move and
+     * ends the turn adjacent to an enemy pawn on the same [row], it may be captured
+     * _en passant_ by the enemy pawn as if it had moved only one square.
+     *
+     * This capture is legal only on the move immediately following the pawn's advance."
+     */
+    todo!(
+        "Construct a valid game state, \
+        verify en passant capture is possible, \
+        and compare actual outcome against the expectation"
+    );
+}
+
+#[test]
+fn pawn_en_passant_white_captures_black() {
+    /* "When a pawn advances two squares on its initial move and
+     * ends the turn adjacent to an enemy pawn on the same [row], it may be captured
+     * _en passant_ by the enemy pawn as if it had moved only one square.
+     *
+     * This capture is legal only on the move immediately following the pawn's advance."
+     */
+    todo!(
+        "Construct a valid game state, \
+        verify en passant capture is possible, \
+        and compare actual outcome against the expectation"
+    );
 }
 
 #[test]
@@ -266,6 +296,69 @@ fn pawn_promotion_recalculates_check_on_enemy_king() {
 }
 
 #[test]
+fn white_kingside_castling_works() {
+    todo!("...");
+}
+
+#[test]
+fn black_kingside_castling_works() {
+    todo!("...");
+}
+
+#[test]
+fn white_queenside_castling_works() {
+    todo!("...");
+}
+
+#[test]
+fn black_queenside_castling_works() {
+    todo!("...");
+}
+
+#[test]
+fn white_kingside_castling_works_unless_inducing_check() {
+    todo!("...");
+}
+
+#[test]
+fn black_kingside_castling_works_unless_inducing_check() {
+    todo!("...");
+}
+
+#[test]
+fn white_queenside_castling_works_unless_inducing_check() {
+    todo!("...");
+}
+
+#[test]
+fn black_queenside_castling_works_unless_inducing_check() {
+    todo!("...");
+}
+
+#[test]
+fn verify_unavailable_castling_because_rook_moved_already() {
+    todo!("Remove possibility to perform castle maneuver b/c illegal move");
+}
+
+#[test]
+fn verify_unavailable_castling_because_king_moved_already() {
+    todo!(
+        "Verify that the move representing a castling maneuver is not found \
+    in the set of movement options on the king or the rook."
+    );
+}
+
+#[test]
+fn forbid_castling_when_king_in_check() {
+    todo!("Remove (and verify) the king being unable to castle if it is in check or checkmate.");
+}
+
+#[test]
+fn castling_requires_empty_tiles_between_king_and_rook() {
+    todo!("Construct a context where castling is legal and see if the option to perform it exists");
+}
+
+#[test]
 fn vision_cannot_exceed_endzone_or_sidelines() {
     todo!("Movement options existing beyond the 8x8 tile bounds cannot be valid");
 }
@@ -296,4 +389,94 @@ fn answering_tie_request_does_not_eat_timer() {
 #[test]
 fn checkmate_concessions_and_drawing_disable_further_movement() {
     todo!("... as well as freeze the clocks");
+}
+
+#[test]
+fn time_elapsing_mutates_active_players_clock_only() {
+    todo!("Use concurrent synchronization to accurately decrement a player's chess clock");
+}
+
+#[test]
+fn pausing_game_suspends_all_clocks() {
+    todo!("Verify that time remaining on clocks remains the same at the start and end of pausing");
+}
+
+#[test]
+fn running_out_of_time_triggers_forfeit() {
+    todo!("When a player's clock reaches zero, submit a forfeit action and do not accept more movement submissions");
+}
+
+#[test]
+fn draw_when_game_reaches_dead_position_from_king_vs_king() {
+    /* A dead position is defined as a position where
+     * neither player can checkmate their opponent's king by any
+     * sequence of legal moves.
+     * Although in practice players sometimes play on in dead positions,
+     * according to the rules of chess the game is immediately terminated
+     * the moment a dead position appears on the board.
+     */
+    todo!(
+        "Construct a contrived board state and submit a move that induces \
+    the indicated kind of dead position. Verify that the game is immediately over."
+    );
+}
+
+#[test]
+fn draw_when_game_reaches_dead_position_from_king_vs_king_and_bishop() {
+    /* A dead position is defined as a position where
+     * neither player can checkmate their opponent's king by any
+     * sequence of legal moves.
+     * Although in practice players sometimes play on in dead positions,
+     * according to the rules of chess the game is immediately terminated
+     * the moment a dead position appears on the board.
+     */
+    todo!(
+        "Construct a contrived board state and submit a move that induces \
+    the indicated kind of dead position. Verify that the game is immediately over."
+    );
+}
+
+#[test]
+fn draw_when_game_reaches_dead_position_from_king_vs_king_and_knight() {
+    /* A dead position is defined as a position where
+     * neither player can checkmate their opponent's king by any
+     * sequence of legal moves.
+     * Although in practice players sometimes play on in dead positions,
+     * according to the rules of chess the game is immediately terminated
+     * the moment a dead position appears on the board.
+     */
+    todo!(
+        "Construct a contrived board state and submit a move that induces \
+    the indicated kind of dead position. Verify that the game is immediately over."
+    );
+}
+
+#[test]
+fn draw_when_game_reaches_dead_position_from_king_and_dark_bishop_vs_king_and_dark_bishop() {
+    /* A dead position is defined as a position where
+     * neither player can checkmate their opponent's king by any
+     * sequence of legal moves.
+     * Although in practice players sometimes play on in dead positions,
+     * according to the rules of chess the game is immediately terminated
+     * the moment a dead position appears on the board.
+     */
+    todo!(
+        "Construct a contrived board state and submit a move that induces \
+    the indicated kind of dead position. Verify that the game is immediately over."
+    );
+}
+
+#[test]
+fn draw_when_game_reaches_dead_position_from_king_and_light_bishop_vs_king_and_light_bishop() {
+    /* A dead position is defined as a position where
+     * neither player can checkmate their opponent's king by any
+     * sequence of legal moves.
+     * Although in practice players sometimes play on in dead positions,
+     * according to the rules of chess the game is immediately terminated
+     * the moment a dead position appears on the board.
+     */
+    todo!(
+        "Construct a contrived board state and submit a move that induces \
+    the indicated kind of dead position. Verify that the game is immediately over."
+    );
 }
