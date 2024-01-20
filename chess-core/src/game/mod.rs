@@ -12,14 +12,14 @@ use std::{cell::RefCell, rc::Rc};
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GameState {
-    started: bool,
-    finished: bool,
-    p1_clock: Option<u32>,
-    p2_clock: Option<u32>,
-    p1: PlayerData,
-    p2: PlayerData,
+    pub started: bool,
+    pub finished: bool,
+    pub p1_clock: Option<u32>,
+    pub p2_clock: Option<u32>,
+    pub p1: PlayerData,
+    pub p2: PlayerData,
     #[serde_as(as = "[_; constants::TILECOUNT]")]
-    board: RawBoard,
+    pub board: RawBoard,
     pub hist: History,
 }
 
@@ -108,7 +108,7 @@ pub enum Action {
 pub struct PlayerData {
     pub color: Color,
     pub name: String,
-    pieces: Vec<Rc<RefCell<Piece>>>,
+    pub pieces: Vec<Rc<RefCell<Piece>>>,
 }
 
 impl PlayerData {

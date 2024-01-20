@@ -110,7 +110,7 @@ impl ChessGame {
         Ok(Self { game_id, game })
     }
 
-    pub fn request_vision(&self, piece_id: PieceId) -> Result<VisionPiece> {
+    fn request_vision(&self, piece_id: PieceId) -> Result<VisionPiece> {
         // First thing we're going to do is ask our GameState for a
         // reference to the piece corresponding to the PieceId we specify
         use crate::types::Piece;
@@ -122,4 +122,178 @@ impl ChessGame {
             Err(anyhow::anyhow!("Piece not found: {piece_id}"))
         }
     }
+}
+
+#[test]
+fn new_game_has_32_pieces() {
+    let mut gm = spawn_game_master();
+    let game_id = gm.create_game().unwrap();
+    let game: Result<&'_ ChessGame> = gm.request_game_state(game_id);
+    assert!(&game.is_ok(), "Failed to create a game");
+    {
+        let mut count: usize = 0;
+        let state = game.unwrap().clone();
+        count += state.game.p1.pieces.len();
+        assert_eq!(&count, &16_usize, "p1 needs 16 pieces");
+        count += state.game.p2.pieces.len();
+        assert_eq!(count, 32, "incorrect board composition");
+    }
+}
+
+#[test]
+fn opening_white_pawn_mvmt() {
+    todo!("White pawns should only move forwards by one or two spaces");
+}
+
+#[test]
+fn opening_black_pawn_mvmt() {
+    todo!("Black pawns should relatively move forwards, but their destination tile's index must be less than their starting index.");
+}
+
+#[test]
+fn pawn_moves_two_spaces_only_once() {
+    todo!("Y +/- 2 movement is only allowed for the pawn's first move");
+}
+
+#[test]
+fn pawn_cannot_pass_thru() {
+    todo!("Filter available movement by reducing options that allow blindspot passthru");
+}
+
+#[test]
+fn knight_movement_can_pass_thru() {
+    todo!("Allow knight passthru");
+}
+
+#[test]
+fn prevent_accidental_knight_capturing_friendly_tile() {
+    todo!("The superset of knight move options should be reduced so that ally tiles cannot be captured.");
+}
+
+#[test]
+fn bishops_move_diagonally() {
+    todo!("Program bishop movement");
+}
+
+#[test]
+fn rooks_move_cardinally() {
+    todo!("Program rook movement");
+}
+
+#[test]
+fn kings_move_like_queen_eigenvectors() {
+    todo!("Kings can move one tile in any non-L-shaped direction");
+}
+
+#[test]
+fn queens_can_move_as_either_a_bishop_or_rook() {
+    todo!("Program queen movement");
+}
+
+#[test]
+fn resolve_before_end_of_game_reached_otherwise_panic() {
+    todo!(
+        "At the start of a turn, panic if an enemy king remains in a state of check or checkmate."
+    );
+}
+
+#[test]
+fn cannot_capture_king_only_threaten_check_or_checkmate() {
+    todo!("Directly capturing the king should never happen");
+}
+
+#[test]
+fn pawn_captures_forward_left_and_forward_right() {
+    todo!("Allow pawn to capture correctly");
+}
+
+#[test]
+fn bishop_queen_rook_movement_to_first_tile_in_any_direction_only() {
+    todo!(
+        "BQRs vision should be reduced such that they stop at the first capture in a given X-Y ray"
+    );
+}
+
+#[test]
+fn bishop_queen_rook_stop_before_ally_tile_aka_no_passthru() {
+    todo!("Knight passthru privilege does not apply to queen, bishop, nor rook.");
+}
+
+#[test]
+fn simple_white_pawn_promotion() {
+    todo!("Non-interaction pawn promotion to queen succeeds");
+}
+
+#[test]
+fn pawn_promotion_following_diagonal_capture() {
+    todo!("Pawn promotion after capturing an enemy piece at endzone succeeds");
+}
+
+#[test]
+fn simple_king_movement() {
+    todo!("Ignoring check/checkmate logic, king can move to any defined surrounding tile");
+}
+
+#[test]
+fn move_update_includes_check_info() {
+    todo!("the act of sending the move should also convey one or more rays that make the capture possible");
+}
+
+#[test]
+fn sacrificial_piece_to_protect_king_works() {
+    todo!("Allow players to move their piece to protect the king from an existing enemy check");
+}
+
+#[test]
+fn show_but_forbid_movement_that_exposes_check_or_checkmate() {
+    todo!("Mark a move or capture that induces a check");
+}
+
+#[test]
+fn raise_error_submitting_moves_that_cause_new_checks_or_new_checkmate() {
+    todo!("Intentionally submit a move and confirm it yields an error");
+}
+
+#[test]
+fn pawn_promotion_recalculates_check_on_enemy_king() {
+    todo!(
+        "Since pawn promotion radically alters the game state \
+    the logic should take care to allow suppressing automatic game ending branches \
+    from being reached since the player hasn't had a chance to respond to the promotion. \
+    There ought to be an in-depth checkmate procedure run at the start of the turn. IFF this fails \
+    to find a way out should the game end abruptly."
+    );
+}
+
+#[test]
+fn vision_cannot_exceed_endzone_or_sidelines() {
+    todo!("Movement options existing beyond the 8x8 tile bounds cannot be valid");
+}
+
+#[test]
+fn allow_forfeit_before_checkmate() {
+    todo!("Players can concede the game");
+}
+
+#[test]
+fn request_tie_from_opponent() {
+    todo!(
+        "Either player can request a draw from the opponent \
+    such that agreeing ends the game."
+    );
+}
+
+#[test]
+fn disable_spamming_tie_plz() {
+    todo!("Players can only request a tie twice.");
+}
+
+#[test]
+fn answering_tie_request_does_not_eat_timer() {
+    todo!("Pause both timers when either player requests a draw");
+}
+
+#[test]
+fn checkmate_concessions_and_drawing_disable_further_movement() {
+    todo!("... as well as freeze the clocks");
 }
