@@ -105,10 +105,10 @@ impl GameState {
                 let f1 = Move::forward(&piece, 1);
                 let f2 = Move::forward(&piece, 2);
                 let moves = [nil, f1, f2]; // Ok(VisionPiece::new_with_moves(p.id, &[nil, f1, f2]))
-                Ok(VisionPiece::new_with_moves(
-                    piece.clone().into_inner().id,
-                    moves,
-                ))
+
+                let piece_id: PieceId = ((*piece.clone()).borrow()).id;
+                Ok(VisionPiece::new_with_moves(piece_id, moves))
+                // Needs to be a Result<VisionPiece>
             }
             Type::Queen => Err(anyhow!("Queen movement not yet available")),
             Type::Rook => Err(anyhow!("Rook movemvent not available")),
