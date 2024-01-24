@@ -4,6 +4,8 @@
 //! idiomatic. The math within this file is not meant to be
 //! maintainable or make sense, merely it simplifies visual reasoning
 //! about where pieces should be able to go.
+
+#[derive(Clone, std::cmp::Eq, std::cmp::PartialEq, std::hash::Hash)]
 pub struct XyPair {
     pub x: isize,
     pub y: isize,

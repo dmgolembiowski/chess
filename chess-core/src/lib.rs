@@ -141,9 +141,46 @@ fn new_game_has_32_pieces() {
 
 #[test]
 fn opening_white_pawn_mvmt() {
-    todo!("White pawns should only move forwards by one or two spaces");
+    use std::rc::Rc;
+    use std::cell::RefCell;
+    use std::collections::HashSet;
+    use crate::types::Piece;
+    use crate::game::math::{self, XyPair};
+    
+    let mut gm = spawn_game_master();
+    let game_id = gm.create_game().unwrap();
+    let state = gm.request_game_state(game_id).unwrap();
+    // From left to right, the white pawns have the IDs 9 to 16 inclusive
+    for piece_id in 9..=16 {
+        let vision_options: Result<VisionPiece> = gm.request_vision(game_id, piece_id);
+        assert!(
+            vision_options.is_ok(),
+            "Test uses PieceId's which do not exist"
+        );
+        
+        // Since no moves have happened, it follows that each pawn hasn't moved, thus
+        // it should be allowed three possible movement options: remaining where it is,
+        // moving a single space forward, and moving two spaces forward
+        let ops = vision_options.unwrap();
+        let pz: Rc<RefCell<Piece>> = state.game.piece_by_id(&ops.piece_id).unwrap();    
+        let now: XyPair = math::index_to_xy(((*pz.clone()).borrow()).loc);
+        let viable: HashSet<XyPair> = HashSet::from([
+            now.clone(),
+            XyPair { x: now.clone().x, y: now.clone().y + 1 },
+            XyPair { x: now.clone().x, y: now.clone().y + 2 },
+        ]);
+        // We expect that two non-staying movements should result in a `.dest()` call
+        // that matches Y + 1 and Y + 2 from the current coordinate.
+        //
+        // Note we only check the first three moves because the remaining 22 are None
+        for mvmt in &ops.moves[0..3] {
+            let xy = mvmt.as_ref().unwrap().dest();
+            assert!(viable.contains(&xy), "Impossible movement option found");
+        } 
+    }
 }
 
+#[ignore = "until pawn movement stabilized"]
 #[test]
 fn opening_black_pawn_mvmt() {
     todo!("Black pawns should relatively move forwards, but their destination tile's index must be less than their starting index.");
@@ -237,6 +274,7 @@ fn cannot_capture_king_only_threaten_check_or_checkmate() {
     todo!("Directly capturing the king should never happen");
 }
 
+#[ignore = "until pawn movement stabilized"]
 #[test]
 fn pawn_captures_forward_left_and_forward_right() {
     todo!("Allow pawn to capture correctly");
