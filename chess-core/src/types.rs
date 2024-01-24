@@ -4,6 +4,7 @@ use crate::msg::PieceId;
 use crate::{constants::TILECOUNT, game::math::XyPair};
 use const_typed_builder::Builder;
 use serde::{Deserialize, Serialize};
+use std::borrow::Borrow;
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
@@ -45,7 +46,7 @@ impl Piece {
     }
 }
 pub struct Move<'a> {
-    on: &'a Piece,
+    on: Rc<RefCell<Piece>>,
     cap: bool,
     dir: Direction,
     on_complete: Option<Box<dyn FnOnce() -> Move<'a>>>,
@@ -53,13 +54,13 @@ pub struct Move<'a> {
 
 impl<'a> Move<'a> {
     pub fn dest(&self) -> XyPair {
-        if self.on.color == Color::Black {
+        if ((*self.on.clone()).borrow()).color == Color::Black {
             todo!("Perform the rotation transformation to interpolate values")
         }
         match self.dir {
-            Direction::Nil => index_to_xy(self.on.loc),
+            Direction::Nil => index_to_xy(((*self.on.clone()).borrow()).loc),
             Direction::Forward(delta_y) => {
-                let XyPair { x, y } = index_to_xy(self.on.loc);
+                let XyPair { x, y } = index_to_xy(((*self.on.clone()).borrow()).loc);
                 let new_y = y as usize + delta_y;
                 XyPair {
                     x,
@@ -69,7 +70,8 @@ impl<'a> Move<'a> {
             _ => todo!("Handle remaining directions of movement"),
         }
     }
-    pub fn new_nil(on: &'a Piece) -> Self {
+    pub fn new_nil(on: &Rc<RefCell<Piece>>) -> Self {
+        let on = Rc::clone(on);
         Self {
             on,
             cap: false,
@@ -77,7 +79,8 @@ impl<'a> Move<'a> {
             on_complete: None,
         }
     }
-    pub fn forward(on: &'a Piece, len: usize) -> Self {
+    pub fn forward(on: &Rc<RefCell<Piece>>, len: usize) -> Self {
+        let on = Rc::clone(on);
         Self {
             on,
             cap: false,

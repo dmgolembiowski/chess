@@ -101,11 +101,14 @@ impl GameState {
             Type::King => Err(anyhow!("King movement not yet available")),
             Type::Knight => Err(anyhow!("Knight movement not available")),
             Type::Pawn => {
-                let nil = Move::new_nil(&p);
-                let f1 = Move::forward(p, 1);
-                let f2 = Move::forward(p, 2);
+                let nil = Move::new_nil(&piece);
+                let f1 = Move::forward(&piece, 1);
+                let f2 = Move::forward(&piece, 2);
                 let moves = [nil, f1, f2]; // Ok(VisionPiece::new_with_moves(p.id, &[nil, f1, f2]))
-                Ok(VisionPiece::new_with_moves(p.id, moves))
+                Ok(VisionPiece::new_with_moves(
+                    piece.clone().into_inner().id,
+                    moves,
+                ))
             }
             Type::Queen => Err(anyhow!("Queen movement not yet available")),
             Type::Rook => Err(anyhow!("Rook movemvent not available")),
