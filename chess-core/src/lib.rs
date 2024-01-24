@@ -131,7 +131,7 @@ fn new_game_has_32_pieces() {
     assert!(&game.is_ok(), "Failed to create a game");
     {
         let mut count: usize = 0;
-        let state = game.unwrap().clone();
+        let state = game.unwrap();
         count += state.game.p1.pieces.len();
         assert_eq!(&count, &16_usize, "p1 needs 16 pieces");
         count += state.game.p2.pieces.len();

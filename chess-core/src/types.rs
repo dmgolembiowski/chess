@@ -1,6 +1,7 @@
 #![allow(dead_code)]
-use crate::constants::TILECOUNT;
+use crate::game::math::{index_to_xy, xy_to_index};
 use crate::msg::PieceId;
+use crate::{constants::TILECOUNT, game::math::XyPair};
 use const_typed_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -44,24 +45,66 @@ impl Piece {
     }
 }
 pub struct Move<'a> {
-    on: &'a mut Piece,
+    on: &'a Piece,
     cap: bool,
     dir: Direction,
-    len: usize,
-    dest: usize,
     on_complete: Option<Box<dyn FnOnce() -> Move<'a>>>,
+}
+
+impl<'a> Move<'a> {
+    pub fn dest(&self) -> XyPair {
+        if self.on.color == Color::Black {
+            todo!("Perform the rotation transformation to interpolate values")
+        }
+        match self.dir {
+            Direction::Nil => index_to_xy(self.on.loc),
+            Direction::Forward(delta_y) => {
+                let XyPair { x, y } = index_to_xy(self.on.loc);
+                let new_y = y as usize + delta_y;
+                XyPair {
+                    x,
+                    y: new_y as isize,
+                }
+            }
+            _ => todo!("Handle remaining directions of movement"),
+        }
+    }
+    pub fn new_nil(on: &'a Piece) -> Self {
+        Self {
+            on,
+            cap: false,
+            dir: Direction::Nil,
+            on_complete: None,
+        }
+    }
+    pub fn forward(on: &'a Piece, len: usize) -> Self {
+        Self {
+            on,
+            cap: false,
+            dir: Direction::Forward(len),
+            on_complete: None,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum Direction {
-    Forward,
-    Backward,
-    Right,
-    Left,
-    ForwardRight,
-    BackwardRight,
-    ForwardLeft,
-    BackwardLeft,
+    Forward(usize),
+    Backward(usize),
+    Right(usize),
+    Left(usize),
+    ForwardRight(usize),
+    BackwardRight(usize),
+    ForwardLeft(usize),
+    BackwardLeft(usize),
+    ForwardTwoRightOne,
+    ForwardOneRightTwo,
+    BackwardTwoRightOne,
+    BackwardOneRightTwo,
+    ForwardTwoLeftOne,
+    ForwardOneLeftTwo,
+    BackwardTwoLeftOne,
+    BacwardOneLeftTwo,
     #[default]
     Nil,
 }
@@ -169,31 +212,25 @@ impl Tile {
 }
 
 #[derive(Default)]
-pub struct VisionPiece<'a, 'b>
-where
-    'a: 'b,
-{
+pub struct VisionPiece<'a> {
     pub piece_id: PieceId,
-    pub moves: [Option<&'a Move<'b>>; 25],
+    pub moves: [Option<Move<'a>>; 25],
 }
 
-impl<'a, 'b> VisionPiece<'a, 'b>
-where
-    'a: 'b,
-{
+impl<'a> VisionPiece<'a> {
     #[inline]
     pub fn new_empty(piece_id: PieceId) -> Self {
-        let moves: [Option<&'b Move<'a>>; 25] = Default::default();
+        let moves: [Option<Move<'a>>; 25] = Default::default();
         Self { piece_id, moves }
     }
     #[inline]
-    pub fn new_with_moves(piece_id: PieceId, moves: &'a [Move<'b>]) -> Self {
-        let mut buffer: [Option<&'a Move<'b>>; 25] = Default::default();
-        for (i, m) in moves.as_ref().into_iter().enumerate() {
+    pub fn new_with_moves<const N: usize>(piece_id: PieceId, moves: [Move<'a>; N]) -> Self {
+        let mut buffer: [Option<Move>; 25] = Default::default();
+        for (i, m) in moves.into_iter().enumerate() {
             if i >= 25 {
                 break;
             }
-            buffer[i] = Some(&*m);
+            buffer[i] = Some(m);
         }
         Self {
             piece_id,

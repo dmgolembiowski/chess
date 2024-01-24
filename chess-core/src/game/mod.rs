@@ -1,7 +1,7 @@
 pub mod math;
 
 use crate::msg::PieceId;
-use crate::types::{Color, Piece, RawBoard, Tile, Type, VisionPiece};
+use crate::types::{Color, Move, Piece, RawBoard, Tile, Type, VisionPiece};
 use crate::{constants, types};
 use anyhow::{anyhow, bail, Result};
 use serde::{Deserialize, Serialize};
@@ -86,8 +86,8 @@ impl GameState {
         piece: Rc<RefCell<Piece>>,
         board: &types::RawBoard,
     ) -> Result<VisionPiece> {
-        let piece = piece.borrow();
-        let invert: bool = if &piece.color == &Color::Black {
+        let p = piece.borrow();
+        let invert: bool = if &p.color == &Color::Black {
             true
         } else {
             false
@@ -95,12 +95,18 @@ impl GameState {
         if invert {
             bail!("not yet implemented: handling simple cases first");
         }
-        let XyPair { x, y } = crate::game::math::index_to_xy(piece.loc);
-        match piece.ty {
+        // let XyPair { x, y } = crate::game::math::index_to_xy(p.loc);
+        match p.ty {
             Type::Bishop => Err(anyhow!("Bishop movement not available yet")),
             Type::King => Err(anyhow!("King movement not yet available")),
             Type::Knight => Err(anyhow!("Knight movement not available")),
-            Type::Pawn => Ok(VisionPiece::default()),
+            Type::Pawn => {
+                let nil = Move::new_nil(&p);
+                let f1 = Move::forward(p, 1);
+                let f2 = Move::forward(p, 2);
+                let moves = [nil, f1, f2]; // Ok(VisionPiece::new_with_moves(p.id, &[nil, f1, f2]))
+                Ok(VisionPiece::new_with_moves(p.id, moves))
+            }
             Type::Queen => Err(anyhow!("Queen movement not yet available")),
             Type::Rook => Err(anyhow!("Rook movemvent not available")),
         }
