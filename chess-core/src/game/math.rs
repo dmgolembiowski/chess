@@ -11,6 +11,7 @@ pub struct XyPair {
     pub y: isize,
 }
 
+#[inline]
 pub fn rot_index(index: usize) -> usize {
     let idx: isize = index as isize;
     let dif: isize = idx - 63;
@@ -19,6 +20,7 @@ pub fn rot_index(index: usize) -> usize {
     ret
 }
 
+#[inline]
 pub fn index_to_xy(index: usize) -> XyPair {
     let idx: isize = index as isize;
     let x: isize = idx % 8_isize;
@@ -26,6 +28,7 @@ pub fn index_to_xy(index: usize) -> XyPair {
     XyPair { x, y }
 }
 
+#[inline]
 pub fn xy_to_index(&XyPair { x, y }: &XyPair) -> usize {
     let x: usize = x as usize;
     let y: usize = y as usize;

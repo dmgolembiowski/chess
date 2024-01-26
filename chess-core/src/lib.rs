@@ -141,12 +141,12 @@ fn new_game_has_32_pieces() {
 
 #[test]
 fn opening_white_pawn_mvmt() {
-    use std::rc::Rc;
+    use crate::game::math::{self, XyPair};
+    use crate::types::Piece;
     use std::cell::RefCell;
     use std::collections::HashSet;
-    use crate::types::Piece;
-    use crate::game::math::{self, XyPair};
-    
+    use std::rc::Rc;
+
     let mut gm = spawn_game_master();
     let game_id = gm.create_game().unwrap();
     let state = gm.request_game_state(game_id).unwrap();
@@ -157,17 +157,23 @@ fn opening_white_pawn_mvmt() {
             vision_options.is_ok(),
             "Test uses PieceId's which do not exist"
         );
-        
+
         // Since no moves have happened, it follows that each pawn hasn't moved, thus
         // it should be allowed three possible movement options: remaining where it is,
         // moving a single space forward, and moving two spaces forward
         let ops = vision_options.unwrap();
-        let pz: Rc<RefCell<Piece>> = state.game.piece_by_id(&ops.piece_id).unwrap();    
+        let pz: Rc<RefCell<Piece>> = state.game.piece_by_id(&ops.piece_id).unwrap();
         let now: XyPair = math::index_to_xy(((*pz.clone()).borrow()).loc);
         let viable: HashSet<XyPair> = HashSet::from([
             now.clone(),
-            XyPair { x: now.clone().x, y: now.clone().y + 1 },
-            XyPair { x: now.clone().x, y: now.clone().y + 2 },
+            XyPair {
+                x: now.clone().x,
+                y: now.clone().y + 1,
+            },
+            XyPair {
+                x: now.clone().x,
+                y: now.clone().y + 2,
+            },
         ]);
         // We expect that two non-staying movements should result in a `.dest()` call
         // that matches Y + 1 and Y + 2 from the current coordinate.
@@ -176,7 +182,7 @@ fn opening_white_pawn_mvmt() {
         for mvmt in &ops.moves[0..3] {
             let xy = mvmt.as_ref().unwrap().dest();
             assert!(viable.contains(&xy), "Impossible movement option found");
-        } 
+        }
     }
 }
 
