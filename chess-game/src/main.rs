@@ -14,6 +14,21 @@ use raylib::prelude::*;
 
 const SQUARE_SIZE: i32 = 80;
 
+
+fn get_y_from_col(col: i32) -> usize {
+    match col {
+        0 => 7,
+        1 => 6,
+        2 => 5,
+        3 => 4,
+        4 => 3,
+        5 => 2,
+        6 => 1,
+        7 => 0,
+        _ => panic!("Unintended usage"),
+    }
+}
+
 fn main() {
     let (mut rl, thread) = raylib::init().size(1080, 720).title("Funky Chess").build();
     let mut gm = chess_core::spawn_game_master();
@@ -40,8 +55,10 @@ fn main() {
                 d.draw_rectangle(x_offset, y_offset, SQUARE_SIZE, SQUARE_SIZE, color);
                 // If a chess piece exists at the XyPair corresponding to the given
                 // row and column value, draw it here.
+                let x = row;
+                let y = get_y_from_col(col);
                 d.draw_text(
-                    &format!("({row}, {col})"),
+                    &format!("({x}, {y})"),
                     x_offset,
                     y_offset,
                     16,
