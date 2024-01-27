@@ -1,6 +1,6 @@
 pub mod math;
 
-use crate::msg::PieceId;
+use crate::msg::{PieceId, PlayerId};
 use crate::types::{Color, Move, Piece, RawBoard, Tile, Type, VisionPiece};
 use crate::{constants, types};
 use anyhow::{anyhow, bail, Result};
@@ -13,7 +13,7 @@ use self::math::XyPair;
 // #[derive(Debug, Serialize, Deserialize)]
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GameState {
+pub struct GameState<'a, T: Into<Move<'a>>> {
     pub started: bool,
     pub finished: bool,
     pub p1_clock: Option<u32>,
@@ -22,10 +22,10 @@ pub struct GameState {
     pub p2: PlayerData,
     #[serde_as(as = "[_; constants::TILECOUNT]")]
     pub board: RawBoard,
-    pub hist: History,
+    pub hist: History<'a, T>,
 }
 
-impl GameState {
+impl<'a, T> GameState<'a, T> {
     pub fn new() -> Self {
         let board: [Tile; constants::TILECOUNT] = crate::helper::chess_board();
         Self {
@@ -117,21 +117,25 @@ impl GameState {
 }
 
 #[derive(Default, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct History {
+pub struct History<'a, T: Into<Move<'a>>> {
     id: String,
-    moves: Vec<Action>,
+    pub actions: Vec<Action<'a, T>>,
 }
-impl History {
+impl<'a, T> History<'a, T> {
     pub fn init(id: impl Into<String>) -> Self {
         let id = id.into();
-        let moves: Vec<Action> = vec![];
-        Self { id, moves }
+        let actions: Vec<Action> = vec![];
+        Self { id, actions }
     }
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum Action {
+pub enum Action<'a, T: Into<Move<'a>>> {
     #[default]
     Nil,
+    FixPlayerData,
+    SetActivePlayer(PlayerId),
+    MoveWhite(Box<T>),
+    MoveBlack(Box<T>),
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -142,6 +146,30 @@ pub struct PlayerData {
 }
 
 impl PlayerData {
+    pub fn incomplete_init(
+        color: Color,
+        name: Option<String>,
+        pieces: Option<Vec<Rc<RefCell<Piece>>>>,
+    ) -> Self {
+        let name = if let Some(thing) = name {
+            thing
+        } else {
+            match color {
+                Color::White => String::from("player_1"),
+                Color::Black => String::from("player_2"),
+            }
+        };
+        let pieces = if let Some(thing) = pieces {
+            thing
+        } else {
+            Vec::<Rc<RefCell<Piece>>>::new()
+        };
+        Self {
+            color,
+            name,
+            pieces,
+        }
+    }
     pub fn new_white_player() -> Self {
         let pieces: Vec<Rc<RefCell<Piece>>> = Vec::with_capacity(16);
         PlayerData {

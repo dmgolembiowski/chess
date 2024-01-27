@@ -158,6 +158,12 @@ impl PartialEq<Background> for Color {
     }
 }
 
+// [`TileId`]() bootstraps the index it relates to within a [`RawBoard`]()
+// so that its owning source can be queried for a [`Tile`]() that matches
+// the requested ID. This is useful for graphical / visual implementors,
+// like the one used in [`chess_game::RayTile`]().
+pub type TileId = usize;
+
 // [`Tile`]() uses a weak, reference-counting smart pointer to share
 // exclusive access to the underlying [`Piece`]().
 //
@@ -173,14 +179,14 @@ pub struct Tile {
     pub w_endzone: bool,
     pub b_endzone: bool,
     pub color: Background,
-    pub index: usize,
+    pub index: TileId,
     pub pz: Option<Weak<RefCell<Piece>>>,
 }
 
 // When capturing a [`Piece`]() associated with a given tile,
 // the caller of [`Self::update_piece`]() is responsible for passing a clone of their [`Rc<RefCell<Piece>>`]().
 impl Tile {
-    pub const fn dark(index: usize, w_endzone: bool, b_endzone: bool) -> Self {
+    pub const fn dark(index: TileId, w_endzone: bool, b_endzone: bool) -> Self {
         if w_endzone && b_endzone {
             panic!("Tile promotion is not shareable according to the standard chess rules")
         }
@@ -192,7 +198,7 @@ impl Tile {
             pz: Option::<Weak<RefCell<Piece>>>::None,
         }
     }
-    pub const fn light(index: usize, w_endzone: bool, b_endzone: bool) -> Self {
+    pub const fn light(index: TileId, w_endzone: bool, b_endzone: bool) -> Self {
         if w_endzone && b_endzone {
             panic!("Tile promotion is not shareable according to the standard chess rules")
         }

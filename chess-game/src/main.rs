@@ -3,7 +3,10 @@ use anyhow::Result;
 use chess_core::{
     self,
     constants::*,
-    game::{self, math::{self, XyPair}},
+    game::{
+        self,
+        math::{self, XyPair},
+    },
     helper, msg,
     traits::*,
     types,
@@ -13,7 +16,6 @@ use crossbeam_utils::thread::scope;
 use raylib::prelude::*;
 
 const SQUARE_SIZE: i32 = 80;
-
 
 #[inline]
 fn get_y_from_col(col: i32) -> usize {
@@ -31,7 +33,7 @@ fn get_y_from_col(col: i32) -> usize {
 }
 
 #[inline]
-fn xy_to_row_col(&XyPair{x,y}: &XyPair) -> (i32, i32) {
+fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
     let x = x as i32;
     let y = get_y_from_col(y as i32) as i32;
     (x, y)
@@ -42,9 +44,9 @@ fn main() {
     let mut gm = chess_core::spawn_game_master();
     let game_id: chess_core::msg::GameId = gm.create_game().unwrap();
 
-    let    is_even = |pos: usize| pos % 2 == 0;
-    let     is_odd = |pos: usize| !is_even(pos);
-    let tile_color = |x:   usize, y:   usize| {
+    let is_even = |pos: usize| pos % 2 == 0;
+    let is_odd = |pos: usize| !is_even(pos);
+    let tile_color = |x: usize, y: usize| {
         if (is_odd(x) && is_odd(y)) || (is_even(x) && is_even(y)) {
             Color::WHITE
         } else {
@@ -65,13 +67,7 @@ fn main() {
                 // row and column value, draw it here.
                 let x = row;
                 let y = get_y_from_col(col);
-                d.draw_text(
-                    &format!("({x}, {y})"),
-                    x_offset,
-                    y_offset,
-                    16,
-                    Color::BLACK,
-                );
+                d.draw_text(&format!("({x}, {y})"), x_offset, y_offset, 16, Color::BLACK);
             }
         }
         // To prevent the board from being reset after every single turn
@@ -83,4 +79,20 @@ fn main() {
     }
 
     // Ok(())
+}
+
+// This struct is the collection of related data specific to the raylib-specific
+// graphical rectangle.
+//
+// It is loosely coupled to a [`chess_core::types::Tile`]() and is only concerned
+// with dynamic UI interactions, and forwarding intent to the underpinning ChessGame.
+pub struct RayTile<'a> {
+    pub col_lower_bd: u32,
+    pub col_upper_bd: u32,
+    pub row_lower_bd: u32,
+    pub row_upper_bd: u32,
+    pub background_color: Color,
+    pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
+    pub tile_id: types::TileId,
+    raw_tile: 
 }
