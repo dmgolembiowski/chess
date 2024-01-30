@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use crate::{constants, game::GameState, helper, traits, types};
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 
 pub type GameId = u64;
 
@@ -15,9 +15,8 @@ pub type Class = usize;
 // then the player data in question involves player 1 / white.
 pub type PlayerId = bool;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Copy, PartialEq, Default)]
+#[derive(Clone, Debug, Copy, PartialEq)]
 pub(crate) enum CliMsg {
-    #[default]
     Ping,
     Pong,
     Exit,
@@ -46,10 +45,9 @@ pub(crate) enum CliMsg {
     ),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub(crate) enum Response {
     Ping,
-    #[default]
     Pong,
     // NewGame,
     // NewGameLan,

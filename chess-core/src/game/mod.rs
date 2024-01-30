@@ -4,28 +4,28 @@ use crate::msg::{PieceId, PlayerId};
 use crate::types::{Color, Move, Piece, RawBoard, Tile, Type, VisionPiece};
 use crate::{constants, types};
 use anyhow::{anyhow, bail, Result};
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+// use serde::{Deserialize, Serialize};
+// use serde_with::serde_as;
 use std::{cell::RefCell, rc::Rc};
 
 use self::math::XyPair;
 
 // #[derive(Debug, Serialize, Deserialize)]
-#[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GameState<'a, T: Into<Move<'a>>> {
+// #[serde_as]
+#[derive(Debug, Clone)]
+pub struct GameState {
     pub started: bool,
     pub finished: bool,
     pub p1_clock: Option<u32>,
     pub p2_clock: Option<u32>,
     pub p1: PlayerData,
     pub p2: PlayerData,
-    #[serde_as(as = "[_; constants::TILECOUNT]")]
+    // #[serde_as(as = "[_; constants::TILECOUNT]")]
     pub board: RawBoard,
-    pub hist: History<'a, T>,
+    pub hist: History,
 }
 
-impl<'a, T> GameState<'a, T> {
+impl GameState {
     pub fn new() -> Self {
         let board: [Tile; constants::TILECOUNT] = crate::helper::chess_board();
         Self {
@@ -116,29 +116,28 @@ impl<'a, T> GameState<'a, T> {
     }
 }
 
-#[derive(Default, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct History<'a, T: Into<Move<'a>>> {
+#[derive(Default, Clone, PartialEq, Debug)]
+pub struct History {
     id: String,
-    pub actions: Vec<Action<'a, T>>,
+    pub actions: Vec<Action>,
 }
-impl<'a, T> History<'a, T> {
+impl History {
     pub fn init(id: impl Into<String>) -> Self {
         let id = id.into();
         let actions: Vec<Action> = vec![];
         Self { id, actions }
     }
 }
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum Action<'a, T: Into<Move<'a>>> {
+#[derive(Default, Debug, Clone, PartialEq)]
+pub enum Action {
     #[default]
     Nil,
     FixPlayerData,
     SetActivePlayer(PlayerId),
-    MoveWhite(Box<T>),
-    MoveBlack(Box<T>),
+    Move(*mut u8),
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct PlayerData {
     pub color: Color,
     pub name: String,
@@ -228,6 +227,8 @@ mod tests {
         bq.unwrap();
     }
 
+    /*
+    #[ignore = "Temporarily breaking serialization to allow movement serialization"]
     #[test]
     fn bq_json() {
         use serde_json;
@@ -240,7 +241,7 @@ mod tests {
         };
         assert_eq!(it, serde_json::to_string(&bq).unwrap().as_str());
     }
-
+    */
     #[ignore = "Skipping new game until prerequisites are done"]
     #[test]
     fn create_new_local_game() {

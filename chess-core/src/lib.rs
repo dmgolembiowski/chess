@@ -15,19 +15,28 @@ use chess_derive::ChessFactory;
 use chess_derive::StandardChess;
 use game::{Action, GameState, History, PlayerData};
 use msg::PlayerId;
+use std::marker::PhantomData;
 use std::{collections::BTreeMap, sync::atomic::AtomicU64};
-use types::{RawBoard, Direction};
+use types::{Direction, RawBoard};
 
-pub fn spawn_game_master() -> GameMaster {
+pub fn spawn_game_master<'parent, 'child>() -> GameMaster<'parent, 'child>
+where
+    'parent: 'child,
+{
     GameMaster::new()
 }
 
-pub struct GameMaster {
+pub struct GameMaster<'gm, 'game>
+where
+    'gm: 'game,
+{
     indexer: Box<dyn Fn() -> GameId>,
     sessions: BTreeMap<GameId, ChessGame>,
+    _phantom: PhantomData<&'gm ()>,
+    _phantom2: PhantomData<&'game ()>,
 }
 
-impl GameMaster {
+impl<'gm, 'game> GameMaster<'gm, 'game> {
     pub fn new() -> Self {
         let indexer = Box::new(|| {
             use std::sync::atomic::Ordering;
@@ -40,20 +49,22 @@ impl GameMaster {
             GAME_ID.load(Ordering::Relaxed)
         });
         let sessions = BTreeMap::new();
-        Self { indexer, sessions }
+        Self {
+            indexer,
+            sessions,
+            _phantom: PhantomData,
+            _phantom2: PhantomData,
+        }
     }
 
-    pub fn create_game(&mut self) -> Result<GameId> {
+    pub fn create_game(&'gm mut self) -> Result<GameId> {
         let game_id = (self.indexer)();
         let new_game = ChessGame::new(game_id)?;
         let _ = self.sessions.insert(game_id, new_game);
         Ok(game_id)
     }
 
-    pub fn request_game_state<'a, 'b>(&'a self, game_id: GameId) -> Result<&'b ChessGame>
-    where
-        'a: 'b,
-    {
+    pub fn request_game_state(&'gm self, game_id: GameId) -> Result<&'game ChessGame> {
         if let Some(ref_game) = self.sessions.get(&game_id) {
             Ok(&ref_game)
         } else {
@@ -88,7 +99,7 @@ impl GameMaster {
     // - has passed `Some(player_id)` to the active_player argument if started is `true` or either
     //   of p1_clock or p2_clock are not None
     pub fn try_init_arbitrary_game(
-        &mut self,
+        &'gm mut self,
         game_id: GameId,
         started: bool,
         active_player: Option<PlayerId>,
@@ -119,7 +130,7 @@ impl GameMaster {
                 unreachable!("This is a bug. Please report it on Github.")
             }
         }
-        let mut pregame = ChessGame::internal_new(
+        let pregame = ChessGame::internal_new(
             game_id,
             started,
             active_player,
@@ -128,26 +139,16 @@ impl GameMaster {
             board,
             hist,
         );
-        match &mut pregame.try_apply_history() {
-            &mut Ok(pregame_id) => {
-                // This nastiness seems necessary for accidentally generating a bug
-                // of having conflicting game id's when we try and create a new one
-                // with a specific GameId on the fly.
-                // In other words, we have to wrap around the entire U64 min-max range
-                // if we want to keep everything in sync.
-                let game_id = loop {
-                    let game_id = (self.indexer)();
-                    if game_id == pregame_id + 1 {
-                        break game_id;
-                    } else {
-                        continue;
-                    }
-                };
-                let _ = self.sessions.insert(game_id, pregame);
-                Ok(game_id)
+        let game_id = loop {
+            let game_id = (self.indexer)();
+            if game_id == pregame.game_id + 1 {
+                break game_id;
+            } else {
+                continue;
             }
-            &mut Err(e) => anyhow::bail!(e.into()),
-        }
+        };
+        let _ = self.sessions.insert(game_id, pregame);
+        Ok(game_id)
     }
 }
 
@@ -157,9 +158,10 @@ pub struct ChessGame {
     pub game: GameState,
 }
 
+// impl<'a, 'b> ChessGame<'a, 'b> {
 impl ChessGame {
     pub fn try_apply_history(&mut self) -> Result<GameId> {
-        for action in self.game.hist.actions {
+        for action in self.game.hist.actions.clone() {
             self.apply_action(action)?;
         }
         Ok(self.game_id)
@@ -169,19 +171,23 @@ impl ChessGame {
             Action::Nil => Ok(()),
             Action::SetActivePlayer(pid) => {
                 // TODO:
-                // Start deducting from the remaining time 
-                // on the associated player's clock 
+                // Start deducting from the remaining time
+                // on the associated player's clock
                 Ok(())
             }
             Action::FixPlayerData => {
                 // TODO:
-                // Enumerate over all of the tiles within 
+                // Enumerate over all of the tiles within
                 // self.game.board and:
                 // - upgrade all of the Weak reference counting pointers
                 //   into Rc's,
                 Ok(())
             }
-            Action::MoveWhite(Box<dyn Into<Move<'_>>)
+            Action::Move(r#move) => {
+                // TODO:
+                // - apply the move to self.game.board
+                Ok(())
+            }
         }
     }
     pub fn internal_new(
@@ -222,10 +228,7 @@ impl ChessGame {
     }
     #[allow(non_upper_case_globals)]
     pub fn new(game_id: u64) -> Result<Self> {
-        use crate::{
-            game::{add_piece, History, PlayerData},
-            helper::chess_board,
-        };
+        use crate::{game::add_piece, helper::chess_board};
 
         let (started, finished): (bool, bool) = (false, false);
         let (p1_clock, p2_clock): (Option<u32>, Option<u32>) = (Some(5400000), Some(5400000));

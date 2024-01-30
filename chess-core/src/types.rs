@@ -2,9 +2,10 @@
 use crate::game::math::{index_to_xy, xy_to_index};
 use crate::msg::PieceId;
 use crate::{constants::TILECOUNT, game::math::XyPair};
-use const_typed_builder::Builder;
-use serde::{Deserialize, Serialize};
+// use const_typed_builder::Builder;
+// use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
+use std::fmt::Debug;
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
@@ -26,7 +27,7 @@ impl Board {}
 // This detail is important because [`PlayerData`]() shares write-access (via
 // interior mutability) with [`crate::core::types::Tile`s](), provided one calls
 // [`Rc::upgrade`]() on the [`std::rc::Weak`]() refernce counted pointer to the piece.
-#[derive(Builder, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Piece {
     pub id: PieceId,
     pub color: Color,
@@ -45,11 +46,30 @@ impl Piece {
         self.id = new_id;
     }
 }
+
 pub struct Move<'a> {
     on: Rc<RefCell<Piece>>,
     cap: bool,
     dir: Direction,
     on_complete: Option<Box<dyn FnOnce() -> Move<'a>>>,
+}
+
+impl<'a> PartialEq for Move<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.dir == other.dir
+    }
+}
+
+use std::fmt;
+impl<'a> Debug for Move<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Move")
+            .field("on", &self.on)
+            .field("cap", &self.cap)
+            .field("dir", &self.dir)
+            .field("on_complete", &std::ptr::addr_of!(self.on_complete))
+            .finish()
+    }
 }
 
 impl<'a> Move<'a> {
@@ -116,7 +136,7 @@ pub enum Direction {
 // particular [`Type`] that distinguishes its possible movement
 // options, special properties, movement constraints, and subjective
 // power-level in comparison to others.
-#[derive(Serialize, Clone, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Type {
     Pawn,
     Rook,
@@ -129,7 +149,7 @@ pub enum Type {
 // [`Color`]() is the enum which associates owned player's pieces
 // and that [`PlayerData`]()'s identity. Traditionally, turns will proceed
 // in the order of [`PlayerData::White`]() followed by [`PlayerData::Black`]().
-#[derive(Default, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub enum Color {
     #[default]
     White,
@@ -138,7 +158,7 @@ pub enum Color {
 
 // The shading of the tile beneath any given chess piece is this
 // this module's [`Background`]().
-#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Eq, PartialEq)]
 pub enum Background {
     Light,
     #[default]
@@ -174,7 +194,7 @@ pub type TileId = usize;
 // [`b_endzone`]() and [`w_endzone`]() respectively refer to the tile's
 // ability to promote a pawn to another [`crate::type::Type`]() such as
 // a [`Type::Queen`]().
-#[derive(Builder, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Tile {
     pub w_endzone: bool,
     pub b_endzone: bool,

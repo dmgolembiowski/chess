@@ -86,7 +86,7 @@ fn main() {
 //
 // It is loosely coupled to a [`chess_core::types::Tile`]() and is only concerned
 // with dynamic UI interactions, and forwarding intent to the underpinning ChessGame.
-pub struct RayTile<'a> {
+pub struct RayTile<'a, 'b> {
     pub col_lower_bd: u32,
     pub col_upper_bd: u32,
     pub row_lower_bd: u32,
@@ -94,5 +94,5 @@ pub struct RayTile<'a> {
     pub background_color: Color,
     pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
     pub tile_id: types::TileId,
-    raw_tile: 
+    raw_tile: &'b chess_core::types::Tile,
 }
