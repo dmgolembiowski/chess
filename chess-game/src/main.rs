@@ -13,7 +13,7 @@ use chess_core::{
 };
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
-use raylib::prelude::*;
+use raylib::{ffi::Texture2D, prelude::*};
 
 const SQUARE_SIZE: i32 = 80;
 
@@ -55,7 +55,7 @@ fn main() {
     };
 
     while !rl.window_should_close() {
-        let mut d = rl.begin_drawing(&thread);
+        let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
         for row in 0..8 {
             for col in 0..8 {
@@ -94,5 +94,54 @@ pub struct RayTile<'a, 'b> {
     pub background_color: Color,
     pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
     pub tile_id: types::TileId,
-    raw_tile: &'b chess_core::types::Tile,
+    pub raw_tile: &'b chess_core::types::Tile,
+}
+
+// [ImgPack]() is an attempt to package piece assets directly into the binary
+// at compile time.
+//
+// At runtime, this program uses late initialization to prepare raylib Images
+// from the bytes, which can then be treated as a collection of
+// [`raylib::texture::Texture2D`](https://docs.rs/raylib/4.0.0-dev.2/raylib/struct.Texture2D.html)
+// instances.
+pub struct ImgPack<'a> {
+    filetype: &'a str,
+    bytes: &'a [u8],
+    size: i32,
+}
+
+impl<'a> ImgPack<'a> {
+    pub const fn new(filetype: &'a str, bytes: &'a [u8], size: i32) -> Self {
+        Self {
+            filetype,
+            bytes,
+            size,
+        }
+    }
+}
+
+use std::convert::TryFrom;
+
+// The from-memory image loader enforces a signature on the
+// [`Image::load_image_from_memory`](https://docs.rs/raylib/4.0.0-dev.2/raylib/struct.Image.html#method.load_image_from_memory)
+// call.
+impl<'a> TryFrom<&ImgPack<'a>> for Image {
+    type Error = String;
+
+    fn try_from(pack: &ImgPack<'a>) -> Result<Image, Self::Error> {
+        if pack.size < 0 {
+            return Result::<Image, Self::Error>::Err(
+                "Negative size is undefined behavior".to_string(),
+            );
+        }
+        let realloc: Box<Vec<u8>> = Box::new(pack.bytes.to_vec());
+        Image::load_image_from_mem(pack.filetype, &realloc.as_ref(), pack.size)
+    }
+}
+
+use chess_core::types::Color as COLOR;
+use chess_core::types::Type as TYPE;
+
+fn get_piece<'a>(color: COLOR, piece_type: TYPE) -> &'a Texture2D {
+    todo!("Add lazy static image loading");
 }
