@@ -53,13 +53,13 @@ fn main() {
             Color::LIGHTGRAY
         }
     };
-
+    let white_pawn_texture = get_piece(COLOR::White, TYPE::Pawn, &mut rl, &thread);
     while !rl.window_should_close() {
         let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
         use chess_core::types::Color as COLOR;
         use chess_core::types::Type as TYPE;
-        let white_pawn_texture = get_piece(COLOR::White, TYPE::Pawn, &mut rl, &thread);
+
         for row in 0..8 {
             for col in 0..8 {
                 let y_offset = col * SQUARE_SIZE;
@@ -78,7 +78,7 @@ fn main() {
                 let y = get_y_from_col(col);
                 d.draw_text(&format!("({x}, {y})"), x_offset, y_offset, 16, Color::BLACK);
                 d.draw_rectangle_rec(&here, color);
-                d.draw_texture(white_pawn_texture, x_offset, y_offset, color);
+                d.draw_texture(&white_pawn_texture, x_offset, y_offset, color);
             }
         }
 
@@ -160,19 +160,35 @@ fn get_piece<'a>(
     raylib_handle: &mut RaylibHandle,
     raylib_thread: &RaylibThread,
 ) -> Texture2D {
-    const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
-    const white_pawn_size: i32 = 6742;
-    const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes, white_pawn_size);
-    let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
-    let image = if let Ok(img) = white_pawn_img {
-        Box::new(img)
-    } else {
-        panic!("Could not load the white pawn");
-    };
+    // Using the following approach, we get:
+    //      WARNING: IMAGE: File format not supported
+    //      thread 'main' panicked at chess-game/src/main.rs:171:9:
+    //      image: Could not load the white pawn
+    //
+    // const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
+    // dbg!("{:?}", white_pawn_bytes);
+    // const white_pawn_size: i32 = 6742;
+    // const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes, white_pawn_size);
+    // let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
+    //
+    // // TODO: Find a way to meaningfully store these on the heap so that
+    // // this can return a borrowed local variable
+    // let image = if let Ok(img) = white_pawn_img {
+    //    Box::new(img)
+    // } else {
+    //     panic!("Could not load the white pawn");
+    // };
+    //
+    // let piece: Texture2D = raylib_handle
+    //     .load_texture_from_image(raylib_thread, image.as_ref())
+    //     .unwrap();
+    //
+    // piece
 
-    let piece = *raylib_handle
-        .load_texture_from_image(raylib_thread, image.as_ref())
+    let mut image = Image::load_image("assets/pawn-white.png").unwrap();
+    image.resize(SQUARE_SIZE, SQUARE_SIZE);
+    let piece: Texture2D = raylib_handle
+        .load_texture_from_image(raylib_thread, &image)
         .unwrap();
-
     piece
 }
