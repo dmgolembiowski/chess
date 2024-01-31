@@ -13,5 +13,8 @@ const_typed_builder = "0.3.0"
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 crossbeam-channel = "0.5.11"
 crossbeam-utils = "0.8.19"
-raylib = "3.7"
+# raylib = "3.7"
+[dependencies.raylib]
+git = "https://github.com/IoIxD/raylib-rs"
+branch = "update-useable-fork"
 # rscenes = { version = "1.4.2", features = ["ecs", "hecs"] }

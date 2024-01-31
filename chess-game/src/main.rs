@@ -13,7 +13,7 @@ use chess_core::{
 };
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
-use raylib::{ffi::Texture2D, prelude::*};
+use raylib::prelude::*;
 
 const SQUARE_SIZE: i32 = 80;
 
@@ -57,19 +57,31 @@ fn main() {
     while !rl.window_should_close() {
         let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
+        use chess_core::types::Color as COLOR;
+        use chess_core::types::Type as TYPE;
+        let white_pawn_texture = get_piece(COLOR::White, TYPE::Pawn, &mut rl, &thread);
         for row in 0..8 {
             for col in 0..8 {
                 let y_offset = col * SQUARE_SIZE;
                 let x_offset = row * SQUARE_SIZE;
                 let color = tile_color(row as usize, col as usize);
-                d.draw_rectangle(x_offset, y_offset, SQUARE_SIZE, SQUARE_SIZE, color);
+                let mut here = Rectangle::new(
+                    x_offset as f32,
+                    y_offset as f32,
+                    SQUARE_SIZE as f32,
+                    SQUARE_SIZE as f32,
+                );
+                // d.draw_rectangle(x_offset, y_offset, SQUARE_SIZE, SQUARE_SIZE, color);
                 // If a chess piece exists at the XyPair corresponding to the given
                 // row and column value, draw it here.
                 let x = row;
                 let y = get_y_from_col(col);
                 d.draw_text(&format!("({x}, {y})"), x_offset, y_offset, 16, Color::BLACK);
+                d.draw_rectangle_rec(&here, color);
+                d.draw_texture(white_pawn_texture, x_offset, y_offset, color);
             }
         }
+
         // To prevent the board from being reset after every single turn
         /*
         'game: loop {
@@ -142,6 +154,25 @@ impl<'a> TryFrom<&ImgPack<'a>> for Image {
 use chess_core::types::Color as COLOR;
 use chess_core::types::Type as TYPE;
 
-fn get_piece<'a>(color: COLOR, piece_type: TYPE) -> &'a Texture2D {
-    todo!("Add lazy static image loading");
+fn get_piece<'a>(
+    _color: COLOR,
+    _piece_type: TYPE,
+    raylib_handle: &mut RaylibHandle,
+    raylib_thread: &RaylibThread,
+) -> Texture2D {
+    const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
+    const white_pawn_size: i32 = 6742;
+    const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes, white_pawn_size);
+    let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
+    let image = if let Ok(img) = white_pawn_img {
+        Box::new(img)
+    } else {
+        panic!("Could not load the white pawn");
+    };
+
+    let piece = *raylib_handle
+        .load_texture_from_image(raylib_thread, image.as_ref())
+        .unwrap();
+
+    piece
 }
