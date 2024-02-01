@@ -99,6 +99,7 @@ fn main() {
 // It is loosely coupled to a [`chess_core::types::Tile`]() and is only concerned
 // with dynamic UI interactions, and forwarding intent to the underpinning ChessGame.
 pub struct RayTile<'a, 'b> {
+    selected: bool,
     pub col_lower_bd: u32,
     pub col_upper_bd: u32,
     pub row_lower_bd: u32,
@@ -107,6 +108,54 @@ pub struct RayTile<'a, 'b> {
     pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
     pub tile_id: types::TileId,
     pub raw_tile: &'b chess_core::types::Tile,
+}
+
+impl<'a, 'b> RayTile<'a, 'b> {
+    pub fn select(&mut self) {
+        self.selected = !self.selected; 
+    }
+    pub fn is_selected(&self) -> bool {
+        self.selected
+    }
+    // SAFETY:
+    // The caller is responsible for ensuring that the exclusive reference
+    // is not under contention between multiple threads.
+    pub unsafe fn override_select(&mut self, new_status: bool) {
+        self.selected = new_status;
+    }
+}
+
+// By default a tile should not be in the selected state
+// at the start. If a mouse clicks on it, we want the 
+// backing raytile to update its truthy "selected" state.
+// Double tapping a tile should reset whether the tile is 
+// selected. 
+#[test]
+#[allow(non_upper_case_globals)]
+fn click_raytile_toggle_state() {
+    use chess_core::types::Tile;
+    const sel: bool = false;
+    const tid: types::TileId = 9;
+    const bg: Color = Color::WHITE;
+    const tile: Tile = chess_core::types::Tile::light(8, false, false);
+    const t2d: Option<&'_ raylib::texture::Texture2D> = None;
+    const SQUARE_SIZE: u32 = 80;
+    {
+        let mut rt = RayTile {
+            selected: sel,
+            col_lower_bd: 0_u32,
+            col_upper_bd: 80_u32,
+            row_lower_bd: 7 * SQUARE_SIZE,
+            row_upper_bd: 8 * SQUARE_SIZE,
+            background_color: bg,
+            texture_overlay: t2d,
+            tile_id: tid,
+            raw_tile: &tile,       
+        };
+        assert_eq!(rt.is_selected(), false, "Sanity check failed");
+        let _ = &mut rt.select();
+        assert!(&rt.is_selected(), "Failed to toggle single-owner selected status");
+    }
 }
 
 // [ImgPack]() is an attempt to package piece assets directly into the binary

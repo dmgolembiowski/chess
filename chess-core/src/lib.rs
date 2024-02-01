@@ -32,8 +32,8 @@ where
 {
     indexer: Box<dyn Fn() -> GameId>,
     sessions: BTreeMap<GameId, ChessGame>,
-    _phantom: PhantomData<&'gm ()>,
-    _phantom2: PhantomData<&'game ()>,
+    _phantone: PhantomData<&'gm ()>,
+    _phantwo: PhantomData<&'game ()>,
 }
 
 impl<'gm, 'game> GameMaster<'gm, 'game> {
@@ -52,12 +52,12 @@ impl<'gm, 'game> GameMaster<'gm, 'game> {
         Self {
             indexer,
             sessions,
-            _phantom: PhantomData,
-            _phantom2: PhantomData,
+            _phantone: PhantomData,
+            _phantwo: PhantomData,
         }
     }
 
-    pub fn create_game(&'gm mut self) -> Result<GameId> {
+    pub fn create_game(&mut self) -> Result<GameId> {
         let game_id = (self.indexer)();
         let new_game = ChessGame::new(game_id)?;
         let _ = self.sessions.insert(game_id, new_game);
@@ -99,7 +99,7 @@ impl<'gm, 'game> GameMaster<'gm, 'game> {
     // - has passed `Some(player_id)` to the active_player argument if started is `true` or either
     //   of p1_clock or p2_clock are not None
     pub fn try_init_arbitrary_game(
-        &'gm mut self,
+        &mut self,
         game_id: GameId,
         started: bool,
         active_player: Option<PlayerId>,

@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+path = "interactive-tests/click-tile-test.rs"
+name = "click-tile-test"
+
 [dependencies]
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 chess-core = { path = "../chess-core" }
