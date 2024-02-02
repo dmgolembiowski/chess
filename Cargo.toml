@@ -1,6 +1,5 @@
 [workspace]
-name = "raylib-leptos-chess"
-exclude = ["vendor/bevy_spicy_networking"]
+name = "chess"
 version = "0.0.1"
 resolver = "2"
 members = ["chess-core", "chess-derive", "chess-game"]
