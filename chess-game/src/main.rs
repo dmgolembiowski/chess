@@ -187,9 +187,7 @@ fn get_piece<'a>(
     // maintain different views of an image, but always have the flexibility
     // to restore the original.
     let mut image = images().get_mut(&(color, piece_type)).unwrap().clone();
-
-    image.resize_nn(SQUARE_SIZE, SQUARE_SIZE);
-
+    image.resize(SQUARE_SIZE, SQUARE_SIZE);
     raylib_handle
         .load_texture_from_image(raylib_thread, &image)
         .unwrap()
@@ -198,7 +196,6 @@ fn get_piece<'a>(
 #[inline]
 fn images() -> &'static mut HashMap<(COLOR, TYPE), raylib::prelude::Image> {
     static PTR: AtomicPtr<HashMap<(COLOR, TYPE), Image>> = AtomicPtr::new(std::ptr::null_mut());
-
     let mut image_map = unsafe { PTR.load(Acquire) };
 
     if image_map.is_null() {
@@ -215,14 +212,9 @@ fn images() -> &'static mut HashMap<(COLOR, TYPE), raylib::prelude::Image> {
             image_map = e;
         }
     }
-
     // Safety: image_map is not null and points to a properly initialized value
     unsafe { &mut *image_map }
 }
-
-/// Currently raylib-rs supports heap-allocated string errors.
-/// If this happens to change in the future, and we need to forward their
-/// error information without breaking any code in here, we only need to
 /// change this error type parameter.
 type LoadResult<E> = Result<HashMap<(COLOR, TYPE), Image>, E>;
 
