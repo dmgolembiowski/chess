@@ -43,12 +43,8 @@ fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
 
 fn main() {
     const X_MARGIN: i32 = 312;
-    const Y_MARGIN: i32 = 48;
-    let (mut rl, thread) = raylib::init()
-        .size(1440, 900)
-        .vsync()
-        .title("funky-chess")
-        .build();
+    const Y_MARGIN: i32 = 64;
+    let (mut rl, thread) = raylib::init().size(1440, 932).title("funky-chess").build();
     let mut gm = chess_core::spawn_game_master();
     let game_id: chess_core::msg::GameId = gm.create_game().unwrap();
 
@@ -61,6 +57,41 @@ fn main() {
             Color::LIGHTGRAY
         }
     };
+
+    let tile_mapping = {
+        let mut it = HashMap::new();
+        for row in 0..8 {
+            for col in 0..8 {
+                let y_lower_bound = Y_MARGIN + col * SQUARE_SIZE;
+                let y_upper_bound = Y_MARGIN + (col + 1) * SQUARE_SIZE;
+                let x_upper_bound = X_MARGIN + (row + 1) * SQUARE_SIZE;
+                let x_lower_bound = X_MARGIN + row * SQUARE_SIZE;
+                let color = tile_color(row as usize, col as usize);
+                let x = row;
+                let y = get_y_from_col(col);
+
+                // prepare an xypair from the supplied data and make a set of mappings
+                // between the chess tiles' XyPair and the offset bounds
+                let norm_xy = XyPair {
+                    x: x.try_into().unwrap(),
+                    y: y.try_into().unwrap(),
+                };
+
+                // There are four vertices on each of the tiles. Each of the four vertices
+                // is needed correlate the mouse's location with a wrapped tile border.
+                let top_left = (x_lower_bound as u32, y_lower_bound as u32);
+                let top_right = (x_upper_bound as u32, y_lower_bound as u32);
+                let bot_left = (x_lower_bound as u32, y_upper_bound as u32);
+                let bot_right = (x_upper_bound as u32, y_upper_bound as u32);
+                it.insert(norm_xy, (top_left, top_right, bot_left, bot_right));
+            }
+        }
+        it
+    };
+    let layout = &gm.request_game_layout(game_id);
+    // At this point, need to query the game master for the current state of the game
+    // so we can build a relation between the XyPairs of tiles and the RayTiles.
+
     let white_pawn_texture = get_piece(COLOR::White, TYPE::Pawn, &mut rl, &thread);
     while !rl.window_should_close() {
         let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
@@ -84,9 +115,16 @@ fn main() {
                 // row and column value, draw it here.
                 let x = row;
                 let y = get_y_from_col(col);
-                d.draw_text(&format!("({x}, {y})"), x_offset, y_offset, 16, Color::BLACK);
                 d.draw_rectangle_rec(&here, color);
-                d.draw_texture(&white_pawn_texture, x_offset, y_offset, color);
+                d.draw_text(
+                    &format!("({x}, {y})\n({x_offset}, {y_offset})"),
+                    x_offset,
+                    y_offset,
+                    16,
+                    Color::BLACK,
+                );
+
+                // d.draw_texture(&white_pawn_texture, x_offset, y_offset, color);
             }
         }
 

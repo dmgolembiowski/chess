@@ -276,7 +276,7 @@ impl ChessGame {
     }
 
     fn request_game_layout(&self) -> Layout {
-        todo!("Massage the self.game into a convenient Layout for frontend consumption")
+        Layout::generate(&self.game)
     }
 }
 

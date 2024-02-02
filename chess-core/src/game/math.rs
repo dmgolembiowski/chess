@@ -11,6 +11,27 @@ pub struct XyPair {
     pub y: isize,
 }
 
+use std::cmp::{Ord, PartialOrd, Ordering};
+
+impl Ord for XyPair {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let mysize = xy_to_index(&self);
+        let theirsize = xy_to_index(&other);
+        match (mysize, theirsize) {
+            (this, that) if this == that => Ordering::Equal,
+            (this, that) if this > that => Ordering::Greater,
+            (this, that) if this < that => Ordering::Less,
+            (_, _) => unreachable!(),
+        }
+    }
+}
+
+impl PartialOrd for XyPair {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 #[inline]
 pub fn rot_index(index: usize) -> usize {
     let idx: isize = index as isize;
