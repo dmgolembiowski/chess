@@ -171,16 +171,11 @@ fn click_raytile_toggle_state() {
 pub struct ImgPack<'a> {
     filetype: &'a str,
     bytes: &'a [u8],
-    size: i32,
 }
 
 impl<'a> ImgPack<'a> {
-    pub const fn new(filetype: &'a str, bytes: &'a [u8], size: i32) -> Self {
-        Self {
-            filetype,
-            bytes,
-            size,
-        }
+    pub const fn new(filetype: &'a str, bytes: &'a [u8]) -> Self {
+        Self { filetype, bytes }
     }
 }
 
@@ -189,25 +184,25 @@ use std::convert::TryFrom;
 // The from-memory image loader enforces a signature on the
 // [`Image::load_image_from_memory`](https://docs.rs/raylib/4.0.0-dev.2/raylib/struct.Image.html#method.load_image_from_memory)
 // call.
-/*
 impl<'a> TryFrom<&ImgPack<'a>> for Image {
     type Error = String;
 
     fn try_from(pack: &ImgPack<'a>) -> Result<Image, Self::Error> {
-        if pack.size < 0 {
+        /*if pack.size < 0 {
             return Result::<Image, Self::Error>::Err(
                 "Negative size is undefined behavior".to_string(),
             );
         }
-        let realloc: Box<Vec<u8>> = Box::new(pack.bytes.to_vec());
-        Image::load_image_from_mem(pack.filetype, &realloc.as_ref(), pack.size)
+        */
+        // let realloc: Box<Vec<u8>> = Box::new(pack.bytes.to_vec());
+        // Image::load_image_from_mem(pack.filetype, &realloc.as_ref())
+        Image::load_image_from_mem(pack.filetype, pack.bytes)
     }
 }
-*/
 
 use chess_core::types::Color as COLOR;
 use chess_core::types::Type as TYPE;
-
+/*
 fn get_piece<'a>(
     _color: COLOR,
     _piece_type: TYPE,
@@ -244,5 +239,37 @@ fn get_piece<'a>(
     let piece: Texture2D = raylib_handle
         .load_texture_from_image(raylib_thread, &image)
         .unwrap();
+    piece
+}
+*/
+fn get_piece<'a>(
+    _color: COLOR,
+    _piece_type: TYPE,
+    raylib_handle: &mut RaylibHandle,
+    raylib_thread: &RaylibThread,
+) -> Texture2D {
+    // Using the following approach, we get:
+    //      WARNING: IMAGE: File format not supported
+    //      thread 'main' panicked at chess-game/src/main.rs:171:9:
+    //      image: Could not load the white pawn
+    //
+    const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
+    dbg!("{:?}", white_pawn_bytes);
+    const white_pawn_size: i32 = 6742;
+    const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes);
+    let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
+    //
+    // // TODO: Find a way to meaningfully store these on the heap so that
+    // // this can return a borrowed local variable
+    let image = if let Ok(img) = white_pawn_img {
+        Box::new(img)
+    } else {
+        panic!("Could not load the white pawn");
+    };
+    //
+    let piece: Texture2D = raylib_handle
+        .load_texture_from_image(raylib_thread, image.as_ref())
+        .unwrap();
+
     piece
 }
