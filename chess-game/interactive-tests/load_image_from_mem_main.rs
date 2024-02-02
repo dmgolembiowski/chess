@@ -256,7 +256,7 @@ fn get_piece<'a>(
     const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
     dbg!("{:?}", white_pawn_bytes);
     const white_pawn_size: i32 = 6742;
-    const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes);
+    const white_pawn_pack: ImgPack = ImgPack::new(".png", white_pawn_bytes);
     let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
     //
     // // TODO: Find a way to meaningfully store these on the heap so that
