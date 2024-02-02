@@ -1,5 +1,4 @@
 #![allow(unused_imports)]
-mod image_data;
 use anyhow::Result;
 use chess_core::{
     self,
@@ -14,7 +13,6 @@ use chess_core::{
 };
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
-use image_data as img;
 use raylib::prelude::*;
 
 const SQUARE_SIZE: i32 = 80;
@@ -173,16 +171,11 @@ fn click_raytile_toggle_state() {
 pub struct ImgPack<'a> {
     filetype: &'a str,
     bytes: &'a [u8],
-    size: i32,
 }
 
 impl<'a> ImgPack<'a> {
-    pub const fn new(filetype: &'a str, bytes: &'a [u8], size: i32) -> Self {
-        Self {
-            filetype,
-            bytes,
-            size,
-        }
+    pub const fn new(filetype: &'a str, bytes: &'a [u8]) -> Self {
+        Self { filetype, bytes }
     }
 }
 
@@ -191,110 +184,92 @@ use std::convert::TryFrom;
 // The from-memory image loader enforces a signature on the
 // [`Image::load_image_from_memory`](https://docs.rs/raylib/4.0.0-dev.2/raylib/struct.Image.html#method.load_image_from_memory)
 // call.
-/*
 impl<'a> TryFrom<&ImgPack<'a>> for Image {
     type Error = String;
 
     fn try_from(pack: &ImgPack<'a>) -> Result<Image, Self::Error> {
-        if pack.size < 0 {
+        /*if pack.size < 0 {
             return Result::<Image, Self::Error>::Err(
                 "Negative size is undefined behavior".to_string(),
             );
         }
-        let realloc: Box<Vec<u8>> = Box::new(pack.bytes.to_vec());
-        Image::load_image_from_mem(pack.filetype, &realloc.as_ref(), pack.size)
+        */
+        // let realloc: Box<Vec<u8>> = Box::new(pack.bytes.to_vec());
+        // Image::load_image_from_mem(pack.filetype, &realloc.as_ref())
+        Image::load_image_from_mem(pack.filetype, pack.bytes)
     }
 }
-*/
 
 use chess_core::types::Color as COLOR;
 use chess_core::types::Type as TYPE;
-use std::sync::atomic::{AtomicPtr, Ordering::{Acquire, Release}};
-
-#[inline]
+/*
 fn get_piece<'a>(
-    color: COLOR,
-    piece_type: TYPE,
+    _color: COLOR,
+    _piece_type: TYPE,
     raylib_handle: &mut RaylibHandle,
     raylib_thread: &RaylibThread,
-) -> Texture2D { 
-    
-    let mut image: &mut raylib::prelude::Image = 
-        images().get_mut(&(color, piece_type)).unwrap();
-    
+) -> Texture2D {
+    // Using the following approach, we get:
+    //      WARNING: IMAGE: File format not supported
+    //      thread 'main' panicked at chess-game/src/main.rs:171:9:
+    //      image: Could not load the white pawn
+    //
+    // const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
+    // dbg!("{:?}", white_pawn_bytes);
+    // const white_pawn_size: i32 = 6742;
+    // const white_pawn_pack: ImgPack = ImgPack::new("png", white_pawn_bytes, white_pawn_size);
+    // let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
+    //
+    // // TODO: Find a way to meaningfully store these on the heap so that
+    // // this can return a borrowed local variable
+    // let image = if let Ok(img) = white_pawn_img {
+    //    Box::new(img)
+    // } else {
+    //     panic!("Could not load the white pawn");
+    // };
+    //
+    // let piece: Texture2D = raylib_handle
+    //     .load_texture_from_image(raylib_thread, image.as_ref())
+    //     .unwrap();
+    //
+    // piece
+
+    let mut image = Image::load_image("assets/pawn-white.png").unwrap();
     image.resize(SQUARE_SIZE, SQUARE_SIZE);
-    
-    raylib_handle
+    let piece: Texture2D = raylib_handle
         .load_texture_from_image(raylib_thread, &image)
-        .unwrap()
+        .unwrap();
+    piece
 }
-
-
-#[inline]
-fn images() -> &'static mut HashMap<(COLOR, TYPE), raylib::prelude::Image> {
-    static PTR: AtomicPtr<HashMap<(COLOR, TYPE), Image>> = AtomicPtr::new(std::ptr::null_mut());
-    
-    let mut image_map = unsafe { PTR.load(Acquire) };
-
-    if image_map.is_null() {
-        let it = match generate_image_map() {
-            Err(e) => {
-                panic!("Build ought to fail because assets could not be loaded: {e}");
-            }
-            Ok(it) => it,
-        };
-        image_map = Box::into_raw(Box::new(it));
-        if let Err(e) = PTR.compare_exchange(std::ptr::null_mut(), image_map, Release, Acquire) {
-            // Safety: image_map comes from Box::into_raw above. It was not shared with any other thread.
-            drop(unsafe { Box::from_raw(image_map) });
-            image_map = e;
-        }
-    } 
-
-    // Safety: image_map is not null and points to a properly initialized value
-    unsafe { &mut *image_map }
-}
-
-
-/// Currently raylib-rs supports heap-allocated string errors.
-/// If this happens to change in the future, and we need to forward their
-/// error information without breaking any code in here, we only need to 
-/// change this error type parameter.
-type LoadResult<E> = Result<HashMap<(COLOR, TYPE), Image>, E>;
-
-use hashbrown::HashMap;
-
-fn generate_image_map() -> LoadResult<String> {
-    let mut map = HashMap::new();
-    let lambda = |color: COLOR, piece_type: TYPE| match (color, piece_type) {
-        (COLOR::White, TYPE::Pawn) => img::png_data_white_pawn,
-        (COLOR::White, TYPE::Knight) => img::png_data_white_knight,
-        (COLOR::White, TYPE::Bishop) => img::png_data_white_bishop,
-        (COLOR::White, TYPE::Rook) => img::png_data_white_rook,
-        (COLOR::White, TYPE::Queen) => img::png_data_white_queen,
-        (COLOR::White, TYPE::King) => img::png_data_white_king,
-        (COLOR::Black, TYPE::Pawn) => img::png_data_black_pawn,
-        (COLOR::Black, TYPE::Knight) => img::png_data_black_knight,
-        (COLOR::Black, TYPE::Bishop) => img::png_data_black_bishop,
-        (COLOR::Black, TYPE::Rook) => img::png_data_black_rook,
-        (COLOR::Black, TYPE::Queen) => img::png_data_black_queen,
-        (COLOR::Black, TYPE::King) => img::png_data_black_king,
+*/
+fn get_piece<'a>(
+    _color: COLOR,
+    _piece_type: TYPE,
+    raylib_handle: &mut RaylibHandle,
+    raylib_thread: &RaylibThread,
+) -> Texture2D {
+    // Using the following approach, we get:
+    //      WARNING: IMAGE: File format not supported
+    //      thread 'main' panicked at chess-game/src/main.rs:171:9:
+    //      image: Could not load the white pawn
+    //
+    const white_pawn_bytes: &[u8] = include_bytes!("../assets/pawn-white.png");
+    dbg!("{:?}", white_pawn_bytes);
+    const white_pawn_size: i32 = 6742;
+    const white_pawn_pack: ImgPack = ImgPack::new(".png", white_pawn_bytes);
+    let white_pawn_img: Result<Image, String> = Image::try_from(&white_pawn_pack);
+    //
+    // // TODO: Find a way to meaningfully store these on the heap so that
+    // // this can return a borrowed local variable
+    let image = if let Ok(img) = white_pawn_img {
+        Box::new(img)
+    } else {
+        panic!("Could not load the white pawn");
     };
+    //
+    let piece: Texture2D = raylib_handle
+        .load_texture_from_image(raylib_thread, image.as_ref())
+        .unwrap();
 
-    for color in [COLOR::White, COLOR::Black] {
-        for piece_type in [
-            TYPE::Pawn,
-            TYPE::Knight,
-            TYPE::Bishop,
-            TYPE::Rook,
-            TYPE::Queen,
-            TYPE::King,
-        ] {
-            let key = (color.clone(), piece_type.clone());
-            let data = lambda(color, piece_type);
-            let image = Image::load_image_from_mem(".png", data.data)?;
-            map.insert(key, image);
-        }
-    }
-    Ok(map)
+    piece
 }

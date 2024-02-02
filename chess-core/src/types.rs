@@ -110,7 +110,7 @@ impl<'a> Move<'a> {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub enum Direction {
     Forward(usize),
     Backward(usize),
@@ -136,7 +136,7 @@ pub enum Direction {
 // particular [`Type`] that distinguishes its possible movement
 // options, special properties, movement constraints, and subjective
 // power-level in comparison to others.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Copy)]
 pub enum Type {
     Pawn,
     Rook,
@@ -149,7 +149,7 @@ pub enum Type {
 // [`Color`]() is the enum which associates owned player's pieces
 // and that [`PlayerData`]()'s identity. Traditionally, turns will proceed
 // in the order of [`PlayerData::White`]() followed by [`PlayerData::Black`]().
-#[derive(Default, Clone, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash, Copy)]
 pub enum Color {
     #[default]
     White,
@@ -158,7 +158,7 @@ pub enum Color {
 
 // The shading of the tile beneath any given chess piece is this
 // this module's [`Background`]().
-#[derive(Default, Debug, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Copy)]
 pub enum Background {
     Light,
     #[default]
