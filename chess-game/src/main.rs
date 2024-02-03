@@ -8,9 +8,11 @@ use chess_core::{
         self,
         math::{self, XyPair},
     },
-    helper, msg,
+    helper,
+    layout::{self, Layout},
+    msg,
     traits::*,
-    types,
+    types::{self, TileId},
 };
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
@@ -41,7 +43,7 @@ fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
     (x, y)
 }
 
-fn main() {
+fn main() -> Result<()> {
     const X_MARGIN: i32 = 312;
     const Y_MARGIN: i32 = 64;
     let (mut rl, thread) = raylib::init().size(1440, 932).title("funky-chess").build();
@@ -58,7 +60,7 @@ fn main() {
         }
     };
 
-    let tile_mapping = {
+    let tile_mapping: HashMap<XyPair, Vertices> = {
         let mut it = HashMap::new();
         for row in 0..8 {
             for col in 0..8 {
@@ -83,16 +85,22 @@ fn main() {
                 let top_right = (x_upper_bound as u32, y_lower_bound as u32);
                 let bot_left = (x_lower_bound as u32, y_upper_bound as u32);
                 let bot_right = (x_upper_bound as u32, y_upper_bound as u32);
-                it.insert(norm_xy, (top_left, top_right, bot_left, bot_right));
+                it.insert(
+                    norm_xy,
+                    Vertices::new(top_left, top_right, bot_left, bot_right),
+                );
             }
         }
         it
     };
-    let layout = &gm.request_game_layout(game_id);
+
     // At this point, need to query the game master for the current state of the game
     // so we can build a relation between the XyPairs of tiles and the RayTiles.
+    let layout: Layout = gm.request_game_layout(game_id)?;
 
-    let white_pawn_texture = get_piece(COLOR::White, TYPE::Pawn, &mut rl, &thread);
+    // Finally: we bridge the two worlds of raylib and chess_core.
+    // This is the main loop.
+
     while !rl.window_should_close() {
         let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
@@ -135,31 +143,108 @@ fn main() {
         }
         */
     }
-
-    // Ok(())
+    Ok(())
+    // Ok(())git
 }
+
+use chess_core::types::Tile;
+use raylib::texture::Texture2D;
 
 // This struct is the collection of related data specific to the raylib-specific
 // graphical rectangle.
 //
 // It is loosely coupled to a [`chess_core::types::Tile`]() and is only concerned
 // with dynamic UI interactions, and forwarding intent to the underpinning ChessGame.
-pub struct RayTile<'a, 'b> {
-    selected: bool,
-    pub col_lower_bd: u32,
-    pub col_upper_bd: u32,
-    pub row_lower_bd: u32,
-    pub row_upper_bd: u32,
+pub struct RayTile<'a> {
+    pub selected: bool,
+    pub vertices: Vertices,
+    pub xy: XyPair,
     pub background_color: Color,
-    pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
+    pub piece_id: Option<msg::PieceId>,
+    pub texture_overlay: Option<Texture2D>,
     pub tile_id: types::TileId,
-    pub raw_tile: &'b chess_core::types::Tile,
+    pub raw_tile: &'a Tile,
 }
 
-impl<'a, 'b> RayTile<'a, 'b> {
+impl<'a> RayTile<'a> {
+    pub fn new(
+        selected: bool,
+        raw_tile: &'a Tile,
+        xy: XyPair,
+        tile_id: TileId,
+        vertices: Vertices,
+        texture_overlay: Option<Texture2D>,
+        background_color: Color,
+        piece_id: Option<msg::PieceId>,
+    ) -> Self {
+        Self {
+            selected,
+            vertices,
+            xy,
+            background_color,
+            texture_overlay,
+            tile_id,
+            raw_tile,
+            piece_id,
+        }
+    }
+
+    pub fn draw(&self, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) {
+        // TODO: Handle `self.selected`
+        // TODO: Handle whether the tile is shown as a friendly/controlled tile
+        todo!("Assuming `init` has already happened, we only need to case out the logic if 
+            a single Rectangle with an empty background color is needed, otherwise a multi-stage
+            drawing with a Texture2D, some highlight/filtering to indicate its active state, 
+            or to do simply nothing because there is no Piece associated with the Tile.")
+    }
+
+    pub fn init(raw_tile: &'a Tile, xy: XyPair, vertices: Vertices, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) -> Self {
+        let has_associated_piece = raw_tile.pz.is_some();
+        let color_bg = match raw_tile.color {
+            types::Background::Light => Color::WHITE,
+            types::Background::Dark => Color::LIGHTGRAY,
+        };
+        let tile_id: TileId = raw_tile.index;
+        if has_associated_piece {
+            // Safety: already verified that the `pz` field is not `None`
+            let pz = unsafe { raw_tile.pz.as_ref().unwrap_unchecked() };
+            assert!(pz.weak_count() > 0, "PlayerData already dropped");
+            match (*(unsafe { pz.upgrade().unwrap_unchecked() }))
+                .borrow()
+                .clone()
+            {
+                types::Piece { id, color, ty, loc: _loc } => {
+                    let texture = get_piece(color, ty, raylib_handle, raylib_thread);
+                    return Self::new(
+                        /* selected: bool = */ false,
+                        /* raw_tile: &'a Tile = */ raw_tile,
+                        /* xy: XyPair = */ xy,
+                        /* tile_id: TileId = */ tile_id,
+                        /* vertices: Vertices = */ vertices,
+                        /* texture_overlay: Option<Texture2D> = */ Some(texture),
+                        /* background_color: Color = */ color_bg,
+                        /* piece_id: Option<msg::PieceId> = */ Some(id),          
+                    );
+                }
+            }
+        } else {
+            Self::new(
+                /* selected: bool = */ false,
+                /* raw_tile: &'a Tile = */ raw_tile,
+                /* xy: XyPair = */ xy,
+                /* tile_id: TileId = */ tile_id,
+                /* vertices: Vertices = */ vertices,
+                /* texture_overlay: Option<Texture2D> = */ None,
+                /* background_color: Color = */ color_bg,
+                /* piece_id: Option<msg::PieceId> = */ None,           
+            )
+        }
+    }
+
     pub fn select(&mut self) {
         self.selected = !self.selected;
     }
+    #[deprecated]
     pub fn is_selected(&self) -> bool {
         self.selected
     }
@@ -168,6 +253,51 @@ impl<'a, 'b> RayTile<'a, 'b> {
     // is not under contention between multiple threads.
     pub unsafe fn override_select(&mut self, new_status: bool) {
         self.selected = new_status;
+    }
+}
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct Vertices {
+    pub top_left: (u32, u32),
+    pub top_right: (u32, u32),
+    pub bot_left: (u32, u32),
+    pub bot_right: (u32, u32),
+}
+
+impl Vertices {
+    pub fn new(
+        top_left: (u32, u32),
+        top_right: (u32, u32),
+        bot_left: (u32, u32),
+        bot_right: (u32, u32),
+    ) -> Self {
+        Self {
+            top_left,
+            top_right,
+            bot_left,
+            bot_right,
+        }
+    }
+}
+
+impl TryFrom<&Vertices> for Rectangle {
+    type Error = String;
+    fn try_from(vertices: &Vertices) -> Result<Self, Self::Error> {
+        // Do not allow the construction of a rectangle that is
+        // not mathematically sound. Ergo, we do not allow
+        // Rectangle::try_from(&<Vertices as Default>::default()).unwrap()
+        let width = vertices.top_right.0 - vertices.top_left.0;
+        let height = vertices.bot_left.1 - vertices.top_left.1;
+
+        if width * height <= 0 {
+            return Err(Self::Error::from("Cannot construct zero-area rectangle"));
+        }
+
+        Ok(Rectangle::new(
+            vertices.top_left.0 as f32,
+            vertices.top_left.1 as f32,
+            width as f32,
+            height as f32,
+        ))
     }
 }
 
@@ -185,14 +315,11 @@ fn click_raytile_toggle_state() {
     const bg: Color = Color::WHITE;
     const tile: Tile = chess_core::types::Tile::light(8, false, false);
     const t2d: Option<&'_ raylib::texture::Texture2D> = None;
-    const SQUARE_SIZE: u32 = 80;
+    let vertices: Vertices = <Vertices as Default>::default();
     {
         let mut rt = RayTile {
+            vertices,
             selected: sel,
-            col_lower_bd: 0_u32,
-            col_upper_bd: 80_u32,
-            row_lower_bd: 7 * SQUARE_SIZE,
-            row_upper_bd: 8 * SQUARE_SIZE,
             background_color: bg,
             texture_overlay: t2d,
             tile_id: tid,
