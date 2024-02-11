@@ -241,18 +241,18 @@ impl ChessGame {
 
         let mut board = chess_board();
 
-        let mut ids_white = IntoIterator::into_iter(1_i16..=16_i16);
-        let mut ids_black = IntoIterator::into_iter(-16_i16..=-1_i16).rev();
+        // let mut ids_white = IntoIterator::into_iter(1_i16..=16_i16);
+        // let mut ids_black = IntoIterator::into_iter(-16_i16..=-1_i16).rev();
 
         for mut white_piece in w.into_iter() {
-            let id = unsafe { &mut ids_white.next().unwrap_unchecked() };
-            let _ = &mut white_piece.set_id(*id);
+            // let id = &mut ids_white.next().unwrap();
+            // let _ = &mut white_piece.set_id(*id);
             add_piece(&mut board, white_piece.loc, &mut p1, white_piece)?;
         }
 
         for mut black_piece in b.into_iter() {
-            let id = &mut ids_black.next().unwrap();
-            let _ = &mut black_piece.set_id(*id);
+            // let id = &mut ids_black.next().unwrap();
+            // let _ = &mut black_piece.set_id(*id);
             add_piece(&mut board, black_piece.loc, &mut p2, black_piece)?;
         }
 
@@ -276,7 +276,9 @@ impl ChessGame {
     }
 
     fn request_game_layout(&self) -> Layout {
-        Layout::generate(&self.game)
+        let layout = Layout::generate(&self.game);
+        dbg!("{layout:?}");
+        layout
     }
 }
 
@@ -293,6 +295,21 @@ fn new_game_has_32_pieces() {
         assert_eq!(&count, &16_usize, "p1 needs 16 pieces");
         count += state.game.p2.pieces.len();
         assert_eq!(count, 32, "incorrect board composition");
+    }
+}
+
+#[test]
+fn new_standard_game_has_64_tiles() {
+    let mut gm = spawn_game_master();
+    let game_id = gm.create_game().unwrap();
+    let res: Result<Layout> = gm.request_game_layout(game_id);
+    match res {
+        Ok(layout) => {
+            assert_eq!(layout.data.len(), 64);
+        }
+        Err(error) => {
+            eprintln!("{error:?}");
+        }
     }
 }
 

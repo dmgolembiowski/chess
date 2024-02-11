@@ -198,3 +198,8 @@ pub const fn chess_board() -> [Tile; TILECOUNT] {
         ),
     ]
 }
+
+#[test]
+fn size_8_by_8_board() {
+    assert_eq!(chess_board().len(), 64);
+}

@@ -1,6 +1,6 @@
 pub mod math;
 
-use crate::msg::{PieceId, PlayerId};
+use crate::msg::{PieceId, PlayerId, TileId};
 use crate::types::{Color, Move, Piece, RawBoard, Tile, Type, VisionPiece};
 use crate::{constants, types};
 use anyhow::{anyhow, bail, Result};
@@ -196,6 +196,7 @@ pub fn add_piece(
     player: &mut PlayerData,
     mut pz: Piece,
 ) -> Result<()> {
+    assert_eq!(board.as_ref().len(), 64);
     use crate::constants::TILECOUNT;
     assert_eq!(pz.color, player.color, "Forbidden enemy piece assignment");
     assert!(idx < TILECOUNT, "Out of bounds tile");
@@ -221,7 +222,7 @@ mod tests {
         let bq = Some(Piece {
             color: Color::Black,
             ty: Type::Queen,
-            id: -4_i16,
+            id: -5_i16,
             loc: <usize as Default>::default(),
         });
         bq.unwrap();
@@ -284,12 +285,12 @@ mod tests {
         // assign the weak variant to the `board`,
         // save the owned one to the player
         for white_pz in w.into_iter() {
-            let pos: usize = white_pz.loc.clone();
+            let pos: TileId = white_pz.loc.clone();
             let res: Result<()> = add_piece(&mut board, pos, &mut player_w, white_pz);
             assert!(res.is_ok());
         }
         for black_pz in b.into_iter() {
-            let pos: usize = black_pz.loc.clone();
+            let pos: TileId = black_pz.loc.clone();
             let res: Result<()> = add_piece(&mut board, pos, &mut player_b, black_pz);
             assert!(res.is_ok());
         }
@@ -300,11 +301,11 @@ mod tests {
         use constants::{D1, D8};
         const ERR_REASON: &str = "Failed to match queen color with tile background";
 
-        let beyonce = Rc::new(RefCell::new(ChessBoard::queen_black(D8)));
+        let beyonce = Rc::new(RefCell::new(ChessBoard::queen_black(D8, -5)));
         let beyonce_shared = Some(Rc::clone(&beyonce));
         let mut bt = Tile::dark(D8, false, true);
 
-        bt.update_piece(beyonce_shared);
+        bt.update_piece(beyonce_shared, true);
 
         assert_eq!(
             beyonce.clone().borrow().color,
@@ -313,17 +314,10 @@ mod tests {
             ERR_REASON
         );
 
-        let gaga = Rc::new(RefCell::new(ChessBoard::queen_white(D1)));
+        let gaga = Rc::new(RefCell::new(ChessBoard::queen_white(D1, 4)));
         let gaga_shared = Some(Rc::clone(&gaga));
         let mut gt = Tile::light(D1, true, false);
-
-        gt.update_piece(gaga_shared);
-
-        assert_eq!(
-            gaga.clone().borrow().color,
-            board[D1].color,
-            "{}",
-            ERR_REASON
-        );
+        assert!(gt.pz.is_none());
+        assert!(gt.update_piece(gaga_shared, true).is_ok());
     }
 }

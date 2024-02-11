@@ -10,9 +10,9 @@ use chess_core::{
     },
     helper,
     layout::{self, Layout},
-    msg,
+    msg::{self, PieceId, TileId},
     traits::*,
-    types::{self, TileId},
+    types,
 };
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
@@ -96,22 +96,45 @@ fn main() -> Result<()> {
 
     // At this point, need to query the game master for the current state of the game
     // so we can build a relation between the XyPairs of tiles and the RayTiles.
+    // It is worth noting that the data field on Layout is a std::collections::BTreeMap of
+    // XyPairs to &Tile data.
     let layout: Layout = gm.request_game_layout(game_id)?;
 
     // Finally: we bridge the two worlds of raylib and chess_core.
     // This is the main loop.
+    use chess_core::types::{Color as COLOR, Type as TYPE};
 
     while !rl.window_should_close() {
-        let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
-        d.clear_background(Color::WHITE);
-        use chess_core::types::Color as COLOR;
-        use chess_core::types::Type as TYPE;
-
+        {
+            let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
+            d.clear_background(Color::WHITE);
+        }
+        {
+            // let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
+            /*for (xy, vertex) in tile_mapping.iter() {
+                println!("tile_mapping[{xy:?}] = {vertex:?}");
+            }
+            println!("  ");
+            println!("----------------------------");
+            */
+            // println!("layout.data from Game Master");
+            println!("============================");
+            //for (xy, tile_ref) in layout.data.iter() {
+            //    println!(
+            //        "layout.data[{xy:?}]@[{:?}] = {:?}",
+            //        tile_ref.index, tile_ref.pz
+            //    );
+            //}
+            break;
+        }
+        /*
         for row in 0..8 {
             for col in 0..8 {
-                let y_offset = Y_MARGIN + col * SQUARE_SIZE;
-                let x_offset = X_MARGIN + row * SQUARE_SIZE;
-                let color = tile_color(row as usize, col as usize);
+                let xy = XyPair { x: row, y: get_y_from_col(col) };
+
+                // let y_offset = Y_MARGIN + col * SQUARE_SIZE;
+                // let x_offset = X_MARGIN + row * SQUARE_SIZE;
+                // let color = tile_color(row as usize, col as usize);
                 let mut here = Rectangle::new(
                     x_offset as f32,
                     y_offset as f32,
@@ -121,21 +144,21 @@ fn main() -> Result<()> {
                 // d.draw_rectangle(x_offset, y_offset, SQUARE_SIZE, SQUARE_SIZE, color);
                 // If a chess piece exists at the XyPair corresponding to the given
                 // row and column value, draw it here.
-                let x = row;
-                let y = get_y_from_col(col);
-                d.draw_rectangle_rec(&here, color);
-                d.draw_text(
-                    &format!("({x}, {y})\n({x_offset}, {y_offset})"),
-                    x_offset,
-                    y_offset,
-                    16,
-                    Color::BLACK,
-                );
+                // let x = row;
+                // let y = get_y_from_col(col);
+                // d.draw_rectangle_rec(&here, color);
+                //d.draw_text(
+                //    &format!("({x}, {y})\n({x_offset}, {y_offset})"),
+                //    x_offset,
+                //    y_offset,
+                //    16,
+                //    Color::BLACK,
+                //);
 
                 // d.draw_texture(&white_pawn_texture, x_offset, y_offset, color);
             }
         }
-
+        */
         // To prevent the board from being reset after every single turn
         /*
         'game: loop {
@@ -162,7 +185,7 @@ pub struct RayTile<'a> {
     pub background_color: Color,
     pub piece_id: Option<msg::PieceId>,
     pub texture_overlay: Option<Texture2D>,
-    pub tile_id: types::TileId,
+    pub tile_id: TileId,
     pub raw_tile: &'a Tile,
 }
 
@@ -192,13 +215,21 @@ impl<'a> RayTile<'a> {
     pub fn draw(&self, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) {
         // TODO: Handle `self.selected`
         // TODO: Handle whether the tile is shown as a friendly/controlled tile
-        todo!("Assuming `init` has already happened, we only need to case out the logic if 
+        todo!(
+            "Assuming `init` has already happened, we only need to case out the logic if 
             a single Rectangle with an empty background color is needed, otherwise a multi-stage
             drawing with a Texture2D, some highlight/filtering to indicate its active state, 
-            or to do simply nothing because there is no Piece associated with the Tile.")
+            or to do simply nothing because there is no Piece associated with the Tile."
+        )
     }
 
-    pub fn init(raw_tile: &'a Tile, xy: XyPair, vertices: Vertices, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) -> Self {
+    pub fn init(
+        raw_tile: &'a Tile,
+        xy: XyPair,
+        vertices: Vertices,
+        raylib_handle: &mut RaylibHandle,
+        raylib_thread: &RaylibThread,
+    ) -> Self {
         let has_associated_piece = raw_tile.pz.is_some();
         let color_bg = match raw_tile.color {
             types::Background::Light => Color::WHITE,
@@ -213,7 +244,12 @@ impl<'a> RayTile<'a> {
                 .borrow()
                 .clone()
             {
-                types::Piece { id, color, ty, loc: _loc } => {
+                types::Piece {
+                    id,
+                    color,
+                    ty,
+                    loc: _loc,
+                } => {
                     let texture = get_piece(color, ty, raylib_handle, raylib_thread);
                     return Self::new(
                         /* selected: bool = */ false,
@@ -223,20 +259,18 @@ impl<'a> RayTile<'a> {
                         /* vertices: Vertices = */ vertices,
                         /* texture_overlay: Option<Texture2D> = */ Some(texture),
                         /* background_color: Color = */ color_bg,
-                        /* piece_id: Option<msg::PieceId> = */ Some(id),          
+                        /* piece_id: Option<msg::PieceId> = */ Some(id),
                     );
                 }
             }
         } else {
             Self::new(
-                /* selected: bool = */ false,
-                /* raw_tile: &'a Tile = */ raw_tile,
-                /* xy: XyPair = */ xy,
-                /* tile_id: TileId = */ tile_id,
+                /* selected: bool = */ false, /* raw_tile: &'a Tile = */ raw_tile,
+                /* xy: XyPair = */ xy, /* tile_id: TileId = */ tile_id,
                 /* vertices: Vertices = */ vertices,
                 /* texture_overlay: Option<Texture2D> = */ None,
                 /* background_color: Color = */ color_bg,
-                /* piece_id: Option<msg::PieceId> = */ None,           
+                /* piece_id: Option<msg::PieceId> = */ None,
             )
         }
     }
@@ -311,19 +345,23 @@ impl TryFrom<&Vertices> for Rectangle {
 fn click_raytile_toggle_state() {
     use chess_core::types::Tile;
     const sel: bool = false;
-    const tid: types::TileId = 9;
+    const tid: chess_core::msg::TileId = 9;
     const bg: Color = Color::WHITE;
     const tile: Tile = chess_core::types::Tile::light(8, false, false);
-    const t2d: Option<&'_ raylib::texture::Texture2D> = None;
+    const t2d: Option<raylib::texture::Texture2D> = None;
+    let xy: XyPair = (7, 0).into();
+    const piece_id: Option<PieceId> = Some(8);
     let vertices: Vertices = <Vertices as Default>::default();
     {
         let mut rt = RayTile {
             vertices,
+            xy,
             selected: sel,
             background_color: bg,
             texture_overlay: t2d,
             tile_id: tid,
             raw_tile: &tile,
+            piece_id,
         };
         assert_eq!(rt.is_selected(), false, "Sanity check failed");
         let _ = &mut rt.select();
@@ -335,9 +373,12 @@ fn click_raytile_toggle_state() {
 }
 use chess_core::types::Color as COLOR;
 use chess_core::types::Type as TYPE;
-use std::sync::atomic::{
-    AtomicPtr,
-    Ordering::{Acquire, Release},
+use std::{
+    collections::BTreeMap,
+    sync::atomic::{
+        AtomicPtr,
+        Ordering::{Acquire, Release},
+    },
 };
 
 #[inline]

@@ -7,6 +7,7 @@ pub type GameId = u64;
 // Positively valued integers are black (like the stock market).
 // Negatively valued ones are white.
 pub type PieceId = i16;
+pub type TileId = usize;
 pub type MoveOp = usize;
 pub type Class = usize;
 

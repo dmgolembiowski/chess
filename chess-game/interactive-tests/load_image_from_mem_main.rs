@@ -106,7 +106,7 @@ pub struct RayTile<'a, 'b> {
     pub row_upper_bd: u32,
     pub background_color: Color,
     pub texture_overlay: Option<&'a raylib::texture::Texture2D>,
-    pub tile_id: types::TileId,
+    pub tile_id: msg::TileId,
     pub raw_tile: &'b chess_core::types::Tile,
 }
 
@@ -135,7 +135,7 @@ impl<'a, 'b> RayTile<'a, 'b> {
 fn click_raytile_toggle_state() {
     use chess_core::types::Tile;
     const sel: bool = false;
-    const tid: types::TileId = 9;
+    const tid: chess_core::msg::TileId = 9;
     const bg: Color = Color::WHITE;
     const tile: Tile = chess_core::types::Tile::light(8, false, false);
     const t2d: Option<&'_ raylib::texture::Texture2D> = None;

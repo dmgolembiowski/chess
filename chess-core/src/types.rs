@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use crate::game::math::{index_to_xy, xy_to_index};
-use crate::msg::PieceId;
+use crate::msg::{PieceId, TileId};
 use crate::{constants::TILECOUNT, game::math::XyPair};
 // use const_typed_builder::Builder;
 // use serde::{Deserialize, Serialize};
@@ -10,6 +10,7 @@ use std::{
     cell::RefCell,
     rc::{Rc, Weak},
 };
+use anyhow::{Result, bail};
 
 // [`RawBoard`] is a flat array of 64 [`Tile`s]().
 // There is a useful collection of chess board tile codes
@@ -32,14 +33,14 @@ pub struct Piece {
     pub id: PieceId,
     pub color: Color,
     pub ty: Type,
-    pub loc: usize,
+    pub loc: TileId,
 }
 
 // [`update_loc`]() should be called whenever its position on the board changes.
 // If a [`loc`] on a [`Piece`] reaches 64 or higher, its visibility should be updated
 // so that it cannot be seen on the board.
 impl Piece {
-    pub fn update_loc(&mut self, new_loc: usize) {
+    pub fn update_loc(&mut self, new_loc: TileId) {
         self.loc = new_loc;
     }
     pub fn set_id(&mut self, new_id: PieceId) {
@@ -182,7 +183,7 @@ impl PartialEq<Background> for Color {
 // so that its owning source can be queried for a [`Tile`]() that matches
 // the requested ID. This is useful for graphical / visual implementors,
 // like the one used in [`chess_game::RayTile`]().
-pub type TileId = usize;
+// pub type TileId = usize;
 
 // [`Tile`]() uses a weak, reference-counting smart pointer to share
 // exclusive access to the underlying [`Piece`]().
@@ -230,13 +231,17 @@ impl Tile {
             pz: Option::<Weak<RefCell<Piece>>>::None,
         }
     }
-    pub fn update_piece(&mut self, new_piece: Option<Rc<RefCell<Piece>>>) {
+    pub fn update_piece(&mut self, new_piece: Option<Rc<RefCell<Piece>>>, replace: bool) -> Result<()> {
+        if self.pz.as_ref().is_some() && replace {
+            bail!("Unexpected deallocation attempt on {:?} from {:?}!", &self.pz, new_piece.unwrap()); 
+        }
         let pz: Option<Weak<RefCell<Piece>>> = if let Some(owned) = new_piece {
             Some(Rc::downgrade(&owned))
         } else {
             None
         };
         self.pz = pz;
+        Ok(())
     }
 }
 
