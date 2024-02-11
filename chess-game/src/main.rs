@@ -46,7 +46,8 @@ fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
 fn main() -> Result<()> {
     const X_MARGIN: i32 = 312;
     const Y_MARGIN: i32 = 64;
-    let (mut rl, thread) = raylib::init().size(1440, 932).title("funky-chess").build();
+    let (mut rl, thread): (RaylibHandle, RaylibThread) =
+        raylib::init().size(1440, 932).title("funky-chess").build();
     let mut gm = chess_core::spawn_game_master();
     let game_id: chess_core::msg::GameId = gm.create_game().unwrap();
 
@@ -110,6 +111,17 @@ fn main() -> Result<()> {
             d.clear_background(Color::WHITE);
         }
         {
+            for (xy, vertices) in tile_mapping.iter() {
+                let raw_tile: &Tile = layout.data.get(&xy).unwrap();
+                let color = tile_color(xy.x as usize, xy.y as usize);
+                let selected = false;
+                let tile_id: TileId = raw_tile.clone().index;
+                let raytile =
+                    RayTile::init(raw_tile, xy.clone(), vertices.clone(), &mut rl, &thread);
+                let _ = &raytile.draw(&mut rl, &thread);
+            }
+        }
+        {
             // let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
             /*for (xy, vertex) in tile_mapping.iter() {
                 println!("tile_mapping[{xy:?}] = {vertex:?}");
@@ -117,15 +129,15 @@ fn main() -> Result<()> {
             println!("  ");
             println!("----------------------------");
             */
-            // println!("layout.data from Game Master");
-            println!("============================");
+            //println!("layout.data from Game Master");
+            //println!("============================");
             //for (xy, tile_ref) in layout.data.iter() {
             //    println!(
             //        "layout.data[{xy:?}]@[{:?}] = {:?}",
             //        tile_ref.index, tile_ref.pz
             //    );
             //}
-            break;
+            //break;
         }
         /*
         for row in 0..8 {
@@ -159,15 +171,8 @@ fn main() -> Result<()> {
             }
         }
         */
-        // To prevent the board from being reset after every single turn
-        /*
-        'game: loop {
-
-        }
-        */
     }
     Ok(())
-    // Ok(())git
 }
 
 use chess_core::types::Tile;
@@ -215,12 +220,20 @@ impl<'a> RayTile<'a> {
     pub fn draw(&self, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) {
         // TODO: Handle `self.selected`
         // TODO: Handle whether the tile is shown as a friendly/controlled tile
-        todo!(
-            "Assuming `init` has already happened, we only need to case out the logic if 
+        /*
+            "Assuming `init` has already happened, we only need to case out the logic if
             a single Rectangle with an empty background color is needed, otherwise a multi-stage
-            drawing with a Texture2D, some highlight/filtering to indicate its active state, 
+            drawing with a Texture2D, some highlight/filtering to indicate its active state,
             or to do simply nothing because there is no Piece associated with the Tile."
-        )
+        */
+        {
+            let mut d = raylib_handle.begin_drawing(raylib_thread);
+            let mut rect = Rectangle::try_from(&self.vertices).unwrap();
+            d.draw_rectangle_rec(&rect, self.background_color);
+            if let Some(texture) = &self.texture_overlay {
+                d.draw_texture(texture, rect.x as i32, rect.y as i32, Color::WHITE);
+            }
+        }
     }
 
     pub fn init(
