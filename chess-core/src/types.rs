@@ -4,22 +4,19 @@ use crate::msg::{PieceId, TileId};
 use crate::{constants::TILECOUNT, game::math::XyPair};
 // use const_typed_builder::Builder;
 // use serde::{Deserialize, Serialize};
+use anyhow::{bail, Result};
 use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
 };
-use anyhow::{Result, bail};
 
 // [`RawBoard`] is a flat array of 64 [`Tile`s]().
 // There is a useful collection of chess board tile codes
 // for referring to given slots to this via [`crate::helper`]().
 pub type RawBoard = [Tile; TILECOUNT];
 
-pub struct Board(pub [[Tile; 8]; 8]);
-
-impl Board {}
 // [`Piece`]() is a shared data structure. [`PlayerData`]()
 // instances are considered their owning source. That is, they have the
 // main responsibility of enforcing [`Drop::drop`] wait until all strong reference
@@ -231,9 +228,17 @@ impl Tile {
             pz: Option::<Weak<RefCell<Piece>>>::None,
         }
     }
-    pub fn update_piece(&mut self, new_piece: Option<Rc<RefCell<Piece>>>, replace: bool) -> Result<()> {
+    pub fn update_piece(
+        &mut self,
+        new_piece: Option<Rc<RefCell<Piece>>>,
+        replace: bool,
+    ) -> Result<()> {
         if self.pz.as_ref().is_some() && replace {
-            bail!("Unexpected deallocation attempt on {:?} from {:?}!", &self.pz, new_piece.unwrap()); 
+            bail!(
+                "Unexpected deallocation attempt on {:?} from {:?}!",
+                &self.pz,
+                new_piece.unwrap()
+            );
         }
         let pz: Option<Weak<RefCell<Piece>>> = if let Some(owned) = new_piece {
             Some(Rc::downgrade(&owned))
