@@ -69,7 +69,6 @@ fn main() -> Result<()> {
                 let y_upper_bound = Y_MARGIN + (col + 1) * SQUARE_SIZE;
                 let x_upper_bound = X_MARGIN + (row + 1) * SQUARE_SIZE;
                 let x_lower_bound = X_MARGIN + row * SQUARE_SIZE;
-                let color = tile_color(row as usize, col as usize);
                 let x = row;
                 let y = get_y_from_col(col);
 
@@ -104,22 +103,29 @@ fn main() -> Result<()> {
     // Finally: we bridge the two worlds of raylib and chess_core.
     // This is the main loop.
     use chess_core::types::{Color as COLOR, Type as TYPE};
-
+    let mut raytiles: Vec<RayTile> = Vec::with_capacity(64);
+    for (xy, vertices) in tile_mapping.iter() {
+        let raw_tile: &Tile = layout.data.get(&xy).unwrap();
+        let color = tile_color(xy.x as usize, xy.y as usize);
+        let selected = false;
+        let tile_id: TileId = raw_tile.clone().index;
+        let _ = &mut raytiles.push(RayTile::init(
+            raw_tile,
+            xy.clone(),
+            vertices.clone(),
+            &mut rl,
+            &thread,
+        ));
+    }
+    {
+        let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
+        d.clear_background(Color::WHITE);
+    }
     while !rl.window_should_close() {
         {
-            let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
-            d.clear_background(Color::WHITE);
-        }
-        {
-            for (xy, vertices) in tile_mapping.iter() {
-                let raw_tile: &Tile = layout.data.get(&xy).unwrap();
-                let color = tile_color(xy.x as usize, xy.y as usize);
-                let selected = false;
-                let tile_id: TileId = raw_tile.clone().index;
-                let raytile =
-                    RayTile::init(raw_tile, xy.clone(), vertices.clone(), &mut rl, &thread);
+            let _ = &raytiles.iter().for_each(|raytile| {
                 let _ = &raytile.draw(&mut rl, &thread);
-            }
+            });
         }
         {
             // let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
@@ -231,7 +237,7 @@ impl<'a> RayTile<'a> {
             let mut rect = Rectangle::try_from(&self.vertices).unwrap();
             d.draw_rectangle_rec(&rect, self.background_color);
             if let Some(texture) = &self.texture_overlay {
-                d.draw_texture(texture, rect.x as i32, rect.y as i32, Color::WHITE);
+                d.draw_texture(texture, rect.x as i32, rect.y as i32, self.background_color);
             }
         }
     }
