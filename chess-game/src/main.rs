@@ -21,7 +21,6 @@ use raylib::prelude::*;
 
 const SQUARE_SIZE: i32 = 96;
 
-#[inline]
 fn get_y_from_col(col: i32) -> usize {
     match col {
         0 => 7,
@@ -36,7 +35,6 @@ fn get_y_from_col(col: i32) -> usize {
     }
 }
 
-#[inline]
 fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
     let x = x as i32;
     let y = get_y_from_col(y as i32) as i32;
@@ -400,7 +398,6 @@ use std::{
     },
 };
 
-#[inline]
 fn get_piece<'a>(
     color: COLOR,
     piece_type: TYPE,
@@ -418,7 +415,6 @@ fn get_piece<'a>(
         .unwrap()
 }
 
-#[inline]
 fn images() -> &'static mut HashMap<(COLOR, TYPE), raylib::prelude::Image> {
     static PTR: AtomicPtr<HashMap<(COLOR, TYPE), Image>> = AtomicPtr::new(std::ptr::null_mut());
     let mut image_map = unsafe { PTR.load(Acquire) };
