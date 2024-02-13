@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 mod image_data;
+mod utils;
 use anyhow::Result;
 use chess_core::{
     self,
@@ -12,34 +13,22 @@ use chess_core::{
     layout::{self, Layout},
     msg::{self, PieceId, TileId},
     traits::*,
-    types,
+    types::{self, Color as COLOR, Tile, Type as TYPE},
 };
+use raylib::texture::Texture2D;
+use std::{
+    collections::BTreeMap,
+    sync::atomic::{
+        AtomicPtr,
+        Ordering::{Acquire, Release},
+    },
+};
+
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread::scope;
 use image_data as img;
 use raylib::prelude::*;
-
-const SQUARE_SIZE: i32 = 96;
-
-fn get_y_from_col(col: i32) -> usize {
-    match col {
-        0 => 7,
-        1 => 6,
-        2 => 5,
-        3 => 4,
-        4 => 3,
-        5 => 2,
-        6 => 1,
-        7 => 0,
-        _ => panic!("Unintended usage"),
-    }
-}
-
-fn xy_to_row_col(&XyPair { x, y }: &XyPair) -> (i32, i32) {
-    let x = x as i32;
-    let y = get_y_from_col(y as i32) as i32;
-    (x, y)
-}
+use utils::{get_y_from_col, xy_to_row_col, SQUARE_SIZE};
 
 fn main() -> Result<()> {
     const X_MARGIN: i32 = 312;
@@ -104,9 +93,9 @@ fn main() -> Result<()> {
     let mut raytiles: Vec<RayTile> = Vec::with_capacity(64);
     for (xy, vertices) in tile_mapping.iter() {
         let raw_tile: &Tile = layout.data.get(&xy).unwrap();
-        let color = tile_color(xy.x as usize, xy.y as usize);
-        let selected = false;
-        let tile_id: TileId = raw_tile.clone().index;
+        let _color = tile_color(xy.x as usize, xy.y as usize);
+        let _selected = false;
+        let _tile_id: TileId = raw_tile.clone().index;
         let _ = &mut raytiles.push(RayTile::init(
             raw_tile,
             xy.clone(),
@@ -115,72 +104,15 @@ fn main() -> Result<()> {
             &thread,
         ));
     }
-    {
-        let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
-        d.clear_background(Color::WHITE);
-    }
-    while !rl.window_should_close() {
+    while !&rl.window_should_close() {
         {
             let _ = &raytiles.iter().for_each(|raytile| {
                 let _ = &raytile.draw(&mut rl, &thread);
             });
         }
-        {
-            // let mut d: RaylibDrawHandle<'_> = rl.begin_drawing(&thread);
-            /*for (xy, vertex) in tile_mapping.iter() {
-                println!("tile_mapping[{xy:?}] = {vertex:?}");
-            }
-            println!("  ");
-            println!("----------------------------");
-            */
-            //println!("layout.data from Game Master");
-            //println!("============================");
-            //for (xy, tile_ref) in layout.data.iter() {
-            //    println!(
-            //        "layout.data[{xy:?}]@[{:?}] = {:?}",
-            //        tile_ref.index, tile_ref.pz
-            //    );
-            //}
-            //break;
-        }
-        /*
-        for row in 0..8 {
-            for col in 0..8 {
-                let xy = XyPair { x: row, y: get_y_from_col(col) };
-
-                // let y_offset = Y_MARGIN + col * SQUARE_SIZE;
-                // let x_offset = X_MARGIN + row * SQUARE_SIZE;
-                // let color = tile_color(row as usize, col as usize);
-                let mut here = Rectangle::new(
-                    x_offset as f32,
-                    y_offset as f32,
-                    SQUARE_SIZE as f32,
-                    SQUARE_SIZE as f32,
-                );
-                // d.draw_rectangle(x_offset, y_offset, SQUARE_SIZE, SQUARE_SIZE, color);
-                // If a chess piece exists at the XyPair corresponding to the given
-                // row and column value, draw it here.
-                // let x = row;
-                // let y = get_y_from_col(col);
-                // d.draw_rectangle_rec(&here, color);
-                //d.draw_text(
-                //    &format!("({x}, {y})\n({x_offset}, {y_offset})"),
-                //    x_offset,
-                //    y_offset,
-                //    16,
-                //    Color::BLACK,
-                //);
-
-                // d.draw_texture(&white_pawn_texture, x_offset, y_offset, color);
-            }
-        }
-        */
     }
     Ok(())
 }
-
-use chess_core::types::Tile;
-use raylib::texture::Texture2D;
 
 // This struct is the collection of related data specific to the raylib-specific
 // graphical rectangle.
@@ -388,16 +320,6 @@ fn click_raytile_toggle_state() {
         );
     }
 }
-use chess_core::types::Color as COLOR;
-use chess_core::types::Type as TYPE;
-use std::{
-    collections::BTreeMap,
-    sync::atomic::{
-        AtomicPtr,
-        Ordering::{Acquire, Release},
-    },
-};
-
 fn get_piece<'a>(
     color: COLOR,
     piece_type: TYPE,
