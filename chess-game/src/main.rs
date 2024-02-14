@@ -17,6 +17,7 @@ use chess_core::{
 };
 use raylib::texture::Texture2D;
 use std::{
+    borrow::{Borrow, BorrowMut},
     collections::BTreeMap,
     sync::atomic::{
         AtomicPtr,
@@ -104,7 +105,33 @@ fn main() -> Result<()> {
             &thread,
         ));
     }
+    {
+        let mut d = rl.begin_drawing(&thread);
+        d.clear_background(Color::RAYWHITE);
+    }
     while !&rl.window_should_close() {
+        {
+            let active: bool = rl.is_cursor_on_screen() && rl.is_window_focused();
+            if !active {
+                // TODO:
+                // Continue running down chess clock and receiving GameMaster broadcasts
+                let _ = ();
+            }
+            let mouse: Vector2 = rl.get_mouse_position();
+            for tile in &mut raytiles.iter_mut() {
+                if tile.contains(&mouse) {
+                    if !&tile.is_selected()
+                        && rl.is_mouse_button_pressed(consts::MouseButton::MOUSE_LEFT_BUTTON)
+                    {
+                        tile.borrow_mut().selected = true;
+                    } else {
+                        tile.borrow_mut().hovered = true;
+                    }
+                } else {
+                    tile.borrow_mut().hovered = false;
+                }
+            }
+        }
         {
             let _ = &raytiles.iter().for_each(|raytile| {
                 let _ = &raytile.draw(&mut rl, &thread);
@@ -121,6 +148,7 @@ fn main() -> Result<()> {
 // with dynamic UI interactions, and forwarding intent to the underpinning ChessGame.
 pub struct RayTile<'a> {
     pub selected: bool,
+    pub hovered: bool,
     pub vertices: Vertices,
     pub xy: XyPair,
     pub background_color: Color,
@@ -133,6 +161,7 @@ pub struct RayTile<'a> {
 impl<'a> RayTile<'a> {
     pub fn new(
         selected: bool,
+        hovered: bool,
         raw_tile: &'a Tile,
         xy: XyPair,
         tile_id: TileId,
@@ -143,6 +172,7 @@ impl<'a> RayTile<'a> {
     ) -> Self {
         Self {
             selected,
+            hovered,
             vertices,
             xy,
             background_color,
@@ -151,6 +181,10 @@ impl<'a> RayTile<'a> {
             raw_tile,
             piece_id,
         }
+    }
+
+    pub fn contains(&self, coord: &Vector2) -> bool {
+        self.vertices.contains(coord)
     }
 
     pub fn draw(&self, raylib_handle: &mut RaylibHandle, raylib_thread: &RaylibThread) {
@@ -168,6 +202,13 @@ impl<'a> RayTile<'a> {
             d.draw_rectangle_rec(&rect, self.background_color);
             if let Some(texture) = &self.texture_overlay {
                 d.draw_texture(texture, rect.x as i32, rect.y as i32, self.background_color);
+                if self.selected {
+                    d.draw_rectangle_lines_ex(&rect, 5, Color::MEDIUMSEAGREEN);
+                } else {
+                    if self.hovered {
+                        d.draw_rectangle_lines_ex(&rect, 5, Color::YELLOW);
+                    }
+                }
             }
         }
     }
@@ -202,6 +243,7 @@ impl<'a> RayTile<'a> {
                     let texture = get_piece(color, ty, raylib_handle, raylib_thread);
                     return Self::new(
                         /* selected: bool = */ false,
+                        /* hovered: bool = */ false,
                         /* raw_tile: &'a Tile = */ raw_tile,
                         /* xy: XyPair = */ xy,
                         /* tile_id: TileId = */ tile_id,
@@ -214,9 +256,9 @@ impl<'a> RayTile<'a> {
             }
         } else {
             Self::new(
-                /* selected: bool = */ false, /* raw_tile: &'a Tile = */ raw_tile,
-                /* xy: XyPair = */ xy, /* tile_id: TileId = */ tile_id,
-                /* vertices: Vertices = */ vertices,
+                /* selected: bool = */ false, /* hovered: bool = */ false,
+                /* raw_tile: &'a Tile = */ raw_tile, /* xy: XyPair = */ xy,
+                /* tile_id: TileId = */ tile_id, /* vertices: Vertices = */ vertices,
                 /* texture_overlay: Option<Texture2D> = */ None,
                 /* background_color: Color = */ color_bg,
                 /* piece_id: Option<msg::PieceId> = */ None,
@@ -259,6 +301,15 @@ impl Vertices {
             bot_left,
             bot_right,
         }
+    }
+    pub fn contains(&self, coord: &Vector2) -> bool {
+        (coord.x >= self.bot_left.0 as f32)
+            && (coord.x >= self.top_left.0 as f32)
+            && (coord.y >= self.top_left.1 as f32)
+            && (coord.x <= self.top_right.0 as f32)
+            && (coord.x <= self.bot_right.0 as f32)
+            && (coord.y >= self.top_right.1 as f32)
+            && (coord.y <= self.bot_right.1 as f32)
     }
 }
 
