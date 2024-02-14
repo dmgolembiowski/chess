@@ -1,0 +1,3 @@
+[submodule "vendor/raylib-rs"]
+	path = vendor/raylib-rs
+	url = https://github.com/IoIxD/raylib-rs.git

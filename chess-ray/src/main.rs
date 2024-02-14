@@ -36,6 +36,10 @@ fn main() -> Result<()> {
     const Y_MARGIN: i32 = 64;
     let (mut rl, thread): (RaylibHandle, RaylibThread) =
         raylib::init().size(1440, 932).title("funky-chess").build();
+    {
+        let mut d = &mut rl.begin_drawing(&thread);
+        d.clear_background(Color::RAYWHITE);
+    }
     let mut gm = chess_core::spawn_game_master();
     let game_id: chess_core::msg::GameId = gm.create_game().unwrap();
 
@@ -105,18 +109,8 @@ fn main() -> Result<()> {
             &thread,
         ));
     }
-    {
-        let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::RAYWHITE);
-    }
     while !&rl.window_should_close() {
         {
-            let active: bool = rl.is_cursor_on_screen() && rl.is_window_focused();
-            if !active {
-                // TODO:
-                // Continue running down chess clock and receiving GameMaster broadcasts
-                let _ = ();
-            }
             let mouse: Vector2 = rl.get_mouse_position();
             for tile in &mut raytiles.iter_mut() {
                 if tile.contains(&mouse) {
@@ -124,6 +118,7 @@ fn main() -> Result<()> {
                         && rl.is_mouse_button_pressed(consts::MouseButton::MOUSE_LEFT_BUTTON)
                     {
                         tile.borrow_mut().selected = true;
+                        tile.borrow_mut().hovered = false;
                     } else {
                         tile.borrow_mut().hovered = true;
                     }
@@ -199,7 +194,7 @@ impl<'a> RayTile<'a> {
         {
             let mut d = raylib_handle.begin_drawing(raylib_thread);
             let mut rect = Rectangle::try_from(&self.vertices).unwrap();
-            d.draw_rectangle_rec(&rect, self.background_color);
+            // d.draw_rectangle_rec(&rect, self.background_color);
             if let Some(texture) = &self.texture_overlay {
                 d.draw_texture(texture, rect.x as i32, rect.y as i32, self.background_color);
                 if self.selected {
@@ -209,6 +204,8 @@ impl<'a> RayTile<'a> {
                         d.draw_rectangle_lines_ex(&rect, 5, Color::YELLOW);
                     }
                 }
+            } else {
+                d.draw_rectangle_rec(&rect, self.background_color);
             }
         }
     }

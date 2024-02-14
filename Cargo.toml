@@ -1,5 +1,5 @@
 [workspace]
-name = "chess"
-version = "0.0.1"
+name = "chessray"
+version = "0.1.0"
 resolver = "2"
-members = ["chess-core", "chess-derive", "chess-game"]
+members = ["chess-server", "chess-core", "chess-derive", "chess-ray", "vendor/raylib-rs"]

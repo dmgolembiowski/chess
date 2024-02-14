@@ -2,12 +2,13 @@
 name = "chess-core"
 version = "0.1.0"
 edition = "2021"
-
+description = "A chess engine that stands on its own"
+license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = { version = "1.0.79", features = ["backtrace"] }
-chess-derive = { path = "../chess-derive" }
+chess-derive = { path = "../chess-derive", version = "0.1.0" }
 hashbrown = "0.14.3"
 # const_typed_builder = "0.3.0"
 # serde = { version = "1.0.195", features = ["derive", "rc"] }
