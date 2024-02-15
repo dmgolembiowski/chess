@@ -27,10 +27,4 @@ hashbrown = "0.14.3"
 paste = "1.0.14"
 [dependencies.raylib]
 version = "5.0.0"
-<<<<<<< HEAD
-path = "../vendor/raylib-rs/raylib"
-=======
-git = "https://github.com/bitten2up/raylib-rs"
-branch = "5.0.0"
-# version = "5.0.0"
->>>>>>> f392399 (Fucking work)
+path = "../vendor/raylib-rs"
