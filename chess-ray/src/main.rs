@@ -123,9 +123,7 @@ fn main() -> Result<()> {
                         tile.borrow_mut().hovered = true;
                     }
                 } else {
-                    if tile.hovered {
-                        tile.borrow_mut().hovered = false;
-                    }
+                    tile.borrow_mut().hovered = false;
                 }
             }
         }
