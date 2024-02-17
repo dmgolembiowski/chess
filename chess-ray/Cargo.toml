@@ -28,4 +28,3 @@ paste = "1.0.14"
 [dependencies.raylib]
 version = "5.0.0"
 path = "../vendor/raylib-rs/raylib"
-# version = "5.0.0"
